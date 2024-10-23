@@ -2,10 +2,21 @@
 #include <stdio.h>
 #include "malloc.h"
 
+char *buff = "stringa di copia da copiare";
+
 int main() {
-    int page = getpagesize();
-    printf("size: %d\n", page);
-    printf("%d\n", TINY);
-    printf("%d\n", SMALL);
-    printf("%d\n", LARGE);
+    char *t = ft_malloc(100);
+    int i = 0;
+    while (buff[i]) {
+        t[i] = buff[i++];
+    }
+    t[i + 1] = 0;
+    printf("%s\n", t);
+    char *t2 = ft_malloc(100);
+    i = 0;
+    while (buff[i]) {
+        t2[i] = buff[i++];
+    }
+    t2[i + 1] = 0;
+    printf("%s\n", t2);
 }
