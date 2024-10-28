@@ -11,10 +11,12 @@ static void init()
     const int page = sysconf(_SC_PAGE_SIZE);
     const int tiny_alloc = (page * ((TINY * 100) / page) + page);
     const int small_alloc = (page * ((SMALL * 100) / page) + page);
-    g_blocks = (t_blocks){
-        .small=mmap(0, tiny_alloc, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0),
-        .medium=mmap(0, small_alloc, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0),
-        };
+    if (!g_blocks.small) {
+        g_blocks.small = mmap(0, tiny_alloc, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    }
+    if (!g_blocks.medium) {
+        g_blocks.medium = mmap(0, small_alloc, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    }
     char *small_ptr = g_blocks.small;
     int index = 0;
     for (int len = 0; len < tiny_alloc; len += TINY) {
@@ -49,24 +51,15 @@ static void init()
 void *malloc(size_t size)
 {
     if (!g_blocks.small || !g_blocks.medium) { init(); }
+    t_header *current = nullptr;
     if (size < TINY) {
-        t_header *current = g_blocks.small;
-        while (current->next) {
-            if (current->free) {
-                current->free = false;
-                return current + sizeof(t_header);
-            }
-            current = current->next;
-        }
+        current = g_blocks.small;
+        g_blocks.small = (char *)g_blocks.small + TINY;
+        return current + sizeof(t_header);
     } else if (size < SMALL) {
         t_header *current = g_blocks.medium;
-        while (current->next) {
-            if (current->free) {
-                current->free = false;
-                return current + sizeof(t_header);
-            }
-            current = current->next;
-        }
+        g_blocks.medium = (char *)g_blocks.medium + SMALL;
+        return current + sizeof(t_header);
     } else {
 
     }

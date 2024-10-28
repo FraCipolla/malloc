@@ -4,6 +4,10 @@
 
 char *buff = "stringa di copia da copiare";
 
+void p(char *s) {
+    printf("%s\n", s);
+}
+
 int main() {
     char *t = malloc(100);
     int i = 0;
@@ -11,12 +15,12 @@ int main() {
         t[i] = buff[i++];
     }
     t[i + 1] = 0;
-    printf("%s\n", t);
+    p(t);
     char *t2 = malloc(100);
     i = 0;
     while (buff[i]) {
         t2[i] = buff[i++];
     }
     t2[i + 1] = 0;
-    printf("%s\n", t2);
+    p(t2);
 }

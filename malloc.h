@@ -6,6 +6,13 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#if __STDC_VERSION__ != 202311L
+#define false 0
+#define true !false
+#define nullptr NULL
+#include <stdbool.h>
+#endif
+
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
 #define ALIGNMENT 8 // must be a power of 2
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
@@ -14,6 +21,12 @@
 #define SMALL (1 << 10)
 #define LARGE (1 << 12)
 
+typedef enum {
+    E_SMALL,
+    E_MEDIUM,
+    E_LARGE
+}   type;
+
 typedef struct s_header {
     bool            free;
     size_t          size;
@@ -21,7 +34,7 @@ typedef struct s_header {
     struct s_header *next;
 }   t_header;
 
-typedef struct s_block {
+typedef struct s_blocks {
     void *small;
     void *medium;
     void *large;
