@@ -21,25 +21,37 @@
 #define SMALL (1 << 10)
 #define LARGE (1 << 12)
 
-typedef enum {
-    E_SMALL,
-    E_MEDIUM,
-    E_LARGE
-}   type;
-
 typedef struct s_header {
     bool            free;
     size_t          size;
-    int             index;
     struct s_header *next;
+    struct s_header *prev;
 }   t_header;
+
+typedef struct s_pool {
+    void *small;
+    void *medium;
+    void *large;
+}   pool;
+
+typedef struct s_linked_list {
+    void *node;
+    void *head;
+    void *tail;
+}   linked_list;
 
 typedef struct s_blocks {
     void *small;
     void *medium;
     void *large;
-    void *to_free;
+    struct s_free {
+        linked_list small;
+        linked_list medium;
+        linked_list large;
+    }   free;
 }   t_blocks;
+
+
 
 extern t_blocks g_blocks;
 

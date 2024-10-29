@@ -23,4 +23,9 @@ int main() {
     }
     t2[i + 1] = 0;
     p(t2);
+    for (int i = 0; i < 100; i++) {
+        char *tmp = malloc(150);
+        tmp[0] = 'a';
+        free(tmp);
+    }
 }
