@@ -23,7 +23,7 @@
 
 typedef struct s_header {
     bool            free;
-    size_t          size;
+    int          size;
     struct s_header *next;
     struct s_header *prev;
 }   t_header;
@@ -40,18 +40,16 @@ typedef struct s_linked_list {
     void *tail;
 }   linked_list;
 
+typedef struct s_free {
+    void    *ptr;
+    void    *head;
+    void    *tail;
+}   t_free;
+
 typedef struct s_blocks {
-    void *small;
-    void *medium;
-    void *large;
-    struct s_free {
-        linked_list small;
-        linked_list medium;
-        linked_list large;
-    }   free;
+    pool    pool;
+    void    *free;
 }   t_blocks;
-
-
 
 extern t_blocks g_blocks;
 
