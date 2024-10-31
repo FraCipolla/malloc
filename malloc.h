@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
 
 #if __STDC_VERSION__ != 202311L
 #define false 0
@@ -12,6 +13,8 @@
 #define nullptr NULL
 #include <stdbool.h>
 #endif
+
+#define DEBUG(x) write(1, x, strlen(x))
 
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
 #define ALIGNMENT 8 // must be a power of 2
@@ -21,9 +24,15 @@
 #define SMALL (1 << 10)
 #define LARGE (1 << 12)
 
+typedef enum {
+    ETINY,
+    ESMALL,
+    ELARGE
+}   type;
+
 typedef struct s_header {
     bool            free;
-    int          size;
+    size_t          size;
     struct s_header *next;
     struct s_header *prev;
 }   t_header;
@@ -33,18 +42,6 @@ typedef struct s_pool {
     void *medium;
     void *large;
 }   pool;
-
-typedef struct s_linked_list {
-    void *node;
-    void *head;
-    void *tail;
-}   linked_list;
-
-typedef struct s_free {
-    void    *ptr;
-    void    *head;
-    void    *tail;
-}   t_free;
 
 typedef struct s_blocks {
     pool    pool;

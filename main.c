@@ -16,15 +16,18 @@ int main() {
     }
     t[i + 1] = 0;
     p(t);
-    char *t2 = malloc(100);
-    i = 0;
-    while (buff[i]) {
-        t2[i] = buff[i++];
-    }
-    t2[i + 1] = 0;
-    p(t2);
-    for (int i = 0; i < 100; i++) {
-        char *tmp = malloc(150);
+    
+    // realloc
+    t = realloc(t, 150);
+    printf("%s\n", t);
+    t = realloc(t, 150);
+    printf("%s\n", t);
+    t = realloc(t, 300);
+    printf("%s\n", t);
+
+    // free
+    for (int i = 0; i < 150; i++) {
+        char *tmp = malloc(100);
         tmp[0] = 'a';
         free(tmp);
     }
