@@ -24,6 +24,16 @@
 #define SMALL (1 << 10)
 #define LARGE (1 << 12)
 
+
+//typedef struct {
+//    uint            :5;
+//    uint last       :1;     /* Marks the last block in the sequence */
+//    uint used       :1;     /* Whether the block is used */
+//    uint prev_used  :1;     /* Whether the previous block is used (boundary tag) */
+//    uint size       :24;    /* Block size in bytes (< 16 MB) */
+//} block_t;
+
+
 typedef enum {
     ETINY,
     ESMALL,
