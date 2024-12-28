@@ -17,51 +17,35 @@
 #define DEBUG(x) write(1, x, strlen(x))
 
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
-#define ALIGNMENT 8 // must be a power of 2
-#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
+#define ALIGNMENT sizeof(block_t) // must be a power of 2
+#define ALIGN(size) (((size) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 
 #define TINY (1 << 8)
 #define SMALL (1 << 10)
 #define LARGE (1 << 12)
+#define TTINY 1
+#define TSMALL 2
+#define TLARGE 3
 
+typedef struct {
+   size_t               :2;     /* Paddings bits */
+   size_t type          :2;     /* Type of block: tiny(1), small(2) or large(3) */
+   size_t first         :1;     /* Marks the first block */
+   size_t last          :1;     /* Marks the last block */
+   size_t used          :1;     /* Whether the block is used */
+   size_t free          :1;     /* Whether the block is being freed after used */
+   size_t idx           :8;     /* Block index, for debugging purpose */
+   size_t size          ;       /* Block size in bytes. Max 2^32 or 2^64 depending on system architecture */
+} block_t;
 
-//typedef struct {
-//    uint            :5;
-//    uint last       :1;     /* Marks the last block in the sequence */
-//    uint used       :1;     /* Whether the block is used */
-//    uint prev_used  :1;     /* Whether the previous block is used (boundary tag) */
-//    uint size       :24;    /* Block size in bytes (< 16 MB) */
-//} block_t;
-
-
-typedef enum {
-    ETINY,
-    ESMALL,
-    ELARGE
-}   type;
-
-typedef struct s_header {
-    bool            free;
-    size_t          size;
-    struct s_header *next;
-    struct s_header *prev;
-}   t_header;
-
-typedef struct s_pool {
+typedef struct s_blocks {
     void *small;
     void *medium;
     void *large;
-}   pool;
-
-typedef struct s_blocks {
-    pool    pool;
-    void    *free;
 }   t_blocks;
 
-extern t_blocks g_blocks;
-
-void free(void *ptr);
-void *malloc(size_t size);
+void ft_free(void *ptr);
+void *ft_malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void show_alloc_memory();
 
