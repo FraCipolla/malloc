@@ -19,7 +19,7 @@ int main() {
     }
     t[i + 1] = '\0';
     p(t);
-    ft_free(t);
+    // ft_free(t);
     // // realloc
     // t = realloc(t, 150);
     // printf("%s\n", t);
@@ -29,9 +29,11 @@ int main() {
     // printf("%s\n", t);
 
     // free
-    for (int i = 0; i < 150; i++) {
+    for (int i = 0; i < 250; i++) {
         char *tmp = ft_malloc(100);
         tmp[0] = 'a';
-        ft_free(tmp);
+        
     }
+
+    show_alloc_memory();
 }

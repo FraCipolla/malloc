@@ -23,9 +23,9 @@
 #define TINY (1 << 8)
 #define SMALL (1 << 10)
 #define LARGE (1 << 12)
-#define TTINY 1
-#define TSMALL 2
-#define TLARGE 3
+#define TTINY 0
+#define TSMALL 1
+#define TLARGE 2
 
 typedef struct {
    size_t               :2;     /* Paddings bits */
@@ -38,15 +38,25 @@ typedef struct {
    size_t size          ;       /* Block size in bytes. Max 2^32 or 2^64 depending on system architecture */
 } block_t;
 
-typedef struct s_blocks {
-    void *small;
-    void *medium;
-    void *large;
-}   t_blocks;
+
+/* Only for last block */
+typedef struct footer_s {
+    void *next;
+}   footer_t;
+
+typedef struct s_chunks {
+    void            *small;
+    void            *medium;
+    void            *large;
+    void            *alloc_list_s;
+    void            *alloc_list_m;
+    void            *alloc_list_l;
+}   chunks;
 
 void ft_free(void *ptr);
 void *ft_malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void show_alloc_memory();
+void show_alloc_mem_ex();
 
 #endif
