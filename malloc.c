@@ -6,27 +6,19 @@
 #include <stdlib.h>
 
 chunks g_chunks = {0};
-size_t sizes[] = {TINY, SMALL, LARGE};
 
-static void init()
+static void init(E_TYPES type)
 {
-    DEBUG("init\n");
-    const int page = sysconf(_SC_PAGE_SIZE);
-    const int tiny_alloc = (TINY * 100) + page;
-    printf("Tiny alloc: %d\n", tiny_alloc);
-    const int small_alloc = (page * ((SMALL * 100) / page) + page);
-    if (!g_chunks.small) {
-        g_chunks.small = mmap(NULL, tiny_alloc, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if (g_chunks.small == MAP_FAILED) {
-            perror("mmap failed");
-            exit(42);
-        }
-    }
-        block_t *first = g_chunks.small;
-        first->first = 1;
-        first->idx = 0;
-        ((block_t *)(((char *)g_chunks.small) + (tiny_alloc - TINY)))->last = 1;
-    if (!g_chunks.medium) {
+    switch (type)
+    {
+    case E_TINY:
+        INIT(TINY, g_chunks.small);
+        break;
+    case E_SMALL:
+        INIT(SMALL, g_chunks.medium);
+        break;
+    default:
+        break;
     }
 }
 
@@ -34,28 +26,9 @@ void *ft_malloc(size_t size)
 {
     // DEBUG("malloc\n");
     if (size <= (TINY - ALIGN(sizeof(block_t)))) {
-        if (!g_chunks.small) {
-            init();
-            g_chunks.alloc_list_s = g_chunks.small;
-        }
-        block_t *cast = g_chunks.small;
-        cast->size = size;
-        cast->used = 1;
-        cast->type = TTINY;
-        cast->free = 0;
-        g_chunks.small += TINY;
-        if (cast->last) {
-            printf("last chunk\n");
-            g_chunks.small = nullptr;
-            init();
-            ((footer_t *)((char *)cast + TINY) - sizeof(footer_t))->next = g_chunks.small;
-            ft_malloc(size);
-        } else {
-            ((block_t *)(g_chunks.small))->idx = cast->idx + 1;
-        }
-        return ((char *)cast + ALIGN(sizeof(block_t)));
+        _MALLOC(size, E_TINY, g_chunks.small);
     } else if (size <= (SMALL - ALIGN(sizeof(block_t)))) {
-        if (!g_chunks.small || !g_chunks.medium) { init(); }
+        _MALLOC(size, E_SMALL, g_chunks.medium);
     } else {
 
     }
@@ -67,12 +40,12 @@ void *realloc(void *ptr, size_t size)
         return nullptr;
     }
     size_t offset = size + ALIGN(sizeof(block_t));
-    block_t    *cast = ptr;
-    cast -= ALIGN(sizeof(block_t));
-    if (offset > sizes[cast->type]) {
-        void *new = malloc(size);
+    block_t *cast = (block_t *)((char *)ptr - ALIGN(sizeof(block_t)));
+    size_t block_size = cast->type == 0 ? TINY : cast->type == 1 ? SMALL : LARGE;
+    if (offset > block_size) {
+        void *new = ft_malloc(size);
         memcpy(new, ptr, cast->size);
-        free(ptr);
+        ft_free(ptr);
         return new;
     }
     return ptr;
@@ -80,7 +53,6 @@ void *realloc(void *ptr, size_t size)
 
 void ft_free(void *ptr)
 {
-    // DEBUG("free\n");
     if (!ptr) { return ;}
 
     ptr = (char *)ptr - ALIGN(sizeof(block_t));
@@ -88,66 +60,40 @@ void ft_free(void *ptr)
     cast->free = 1;
     size_t size = 0;
     bool dealloc = false;
-    int type = 0;
     void *start = nullptr;
 
-    if (cast->first) {
-        start = cast;
-        while (cast && !cast->last && cast->used && cast->free) {
-            size += cast->size + ALIGN(sizeof(block_t));
-            cast = (block_t *)((char *)cast + cast->size + ALIGN(sizeof(block_t)));
-        }
-        if (cast->last && cast->used && cast->free) {
-            size += cast->size + ALIGN(sizeof(block_t));
-            type = cast->type;
-            dealloc = true;
-        }
-    } else if (cast->last) {
-        printf("last found!\n");
-        while (cast && !cast->first && cast->used && cast->free) {
-            size += cast->size + ALIGN(sizeof(block_t));
-            cast = (block_t *)((char *)cast - (cast->size + ALIGN(sizeof(block_t))));
-        }
-        if (cast->first && cast->used && cast->free) {
-            size += cast->size + ALIGN(sizeof(block_t));
-            type = cast->type;
-            start = cast;
-            dealloc = true;
-        }
-    } else {
-        block_t *tmp = cast;
-        // printf("used %d && free %d\n", cast->used, cast->free);
-        while (cast && !cast->first && cast->used && cast->free) {
-            size += cast->size + ALIGN(sizeof(block_t));
-            cast = (block_t *)((char *)cast - (cast->size + ALIGN(sizeof(block_t))));
-        }
-        if (cast->first) {
-            start = cast;
-            cast = tmp;
-            while (cast && !cast->last && cast->used && cast->free) {
-                size += cast->size + ALIGN(sizeof(block_t));
-                cast = (block_t *)((char *)cast + (cast->size + ALIGN(sizeof(block_t))));
-            }
-            if (cast->last && cast->used && cast->free) {
-                size += cast->size + ALIGN(sizeof(block_t));
-                type = cast->type;
-                dealloc = true;
-            }
-        }
+    const int block_size = cast->type == E_TINY ? TINY : cast->type == E_SMALL ? SMALL : LARGE;
+    header_t *header = (header_t *)((char *)cast - (cast->idx * block_size));
+    header->free++;
+    if (header->free == header->max_blocks) {
+        dealloc = true;
+        size = (header->max_blocks + 2) * block_size;
+        start = header;
     }
     if (dealloc) {
         printf("munmap! size: %ld\n", size);
-        munmap(start, size);
-        switch (type)
+        switch (cast->type)
         {
-        case TTINY:
-            printf("case TTINY\n");
-            g_chunks.small = nullptr;
+        case E_TINY:
+            printf("case E_TINY\n");
+            printf("size %ld\n", size);
+            if (header->prev && header->next) {
+                ((header_t *)(header->prev))->next = header->next;
+                // merge prev with next
+                g_chunks.small = nullptr;
+            } else if (header->next) {
+                g_chunks.small = header->next;
+            } else if (header->prev) {
+                ((header_t *)(header->prev))->next = nullptr;
+            } else {
+                g_chunks.small = nullptr;
+            }
+            munmap(start, size);
             break;
-        case TSMALL:
+        case E_SMALL:
             g_chunks.medium = nullptr;
             break;
-        case TLARGE:
+        case E_LARGE:
             g_chunks.large = nullptr;
             break;
         default:
@@ -158,19 +104,39 @@ void ft_free(void *ptr)
 
 void show_alloc_memory()
 {
-    void *small_list = g_chunks.alloc_list_s;
+    void *small_list = g_chunks.small;
     printf("TINY : %p\n", small_list);
-    while (42) {
+    while (((header_t *)small_list)->prev) {
+        small_list = ((header_t *)small_list)->prev;
+    }
+    void *first_chunk = small_list;
+    small_list = (char *)small_list + TINY;
+    while ((((char *)small_list) + TINY)) {
         if (((block_t *)small_list)->last) {
-            if (((footer_t *)((char *)small_list + TINY) - sizeof(footer_t))->next) {
-                small_list = ((footer_t *)((char *)small_list + TINY) - sizeof(footer_t))->next;
+            if (((block_t *)small_list)->used) {
+                printf(
+                    "%p - %p : %ld bytes\n",
+                    (char *)small_list + sizeof(block_t),
+                    (char *)small_list + ((block_t *)small_list)->size + sizeof(block_t),
+                    ((block_t *)small_list)->size
+                    );
+            }
+            if (((header_t *)(first_chunk))->next) {
+                small_list = ((header_t *)(first_chunk))->next;
+                first_chunk = ((header_t *)(first_chunk))->next;
+                small_list = (char *)small_list + TINY;
                 printf("TINY : %p\n", small_list);
             } else {
                 break;
             }
         }
         if(((block_t *)small_list)->used && !((block_t *)small_list)->free) {
-            printf("%p - %p : %ld bytes\n", (char *)small_list + sizeof(block_t), (char *)small_list + ((block_t *)small_list)->size + sizeof(block_t), ((block_t *)small_list)->size);
+            printf(
+                "%p - %p : %ld bytes\n",
+                (char *)small_list + sizeof(block_t),
+                (char *)small_list + ((block_t *)small_list)->size + sizeof(block_t),
+                ((block_t *)small_list)->size
+                );
         }
         small_list = ((char *)small_list) + TINY;
     }
