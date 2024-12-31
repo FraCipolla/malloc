@@ -25,31 +25,31 @@
 #define LARGE (1 << 12)
 
 #define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
-#define PERROR(status, msg) perror(msg); exit(status)
-#define INIT(size, ptr)                                                                                  \
-{                                                                                                        \
-    const int page = getpagesize();                                                                      \
-    const int alloc_size = (size * 100) + page;                                                          \
-    void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);      \
-    if (map == MAP_FAILED) { PERROR(42, "mmap failed"); }                                                \
-    if (ptr && ((header_t *)ptr)->full) {                                                                \
-        ((header_t *)map)->prev = ptr;                                                                   \
-        ((header_t *)ptr)->next = map;                                                                   \
-    } else {                                                                                             \
-        ((header_t *)map)->prev = nullptr;                                                               \
-        ((header_t *)map)->next = nullptr;                                                               \
-    }                                                                                                    \
-    ptr = map;                                                                                           \
-    printf("ptr %p\n", ptr);                                                                             \
-    header_t *header = ptr;                                                                              \
-    header->free = 0;                                                                                    \
-    header->block_type = 0;                                                                              \
-    header->block_index = 1;                                                                             \
-    header->max_blocks = (alloc_size / size) - 2;                                                        \
-    header->full = false;                                                                                \
-    ((block_t *)(((char *)ptr) + size))->first = 1;                                                      \
-    ((block_t *)(((char *)ptr) + (alloc_size - (size * 2))))->last = 1;                                  \
-    ((block_t *)(((char *)ptr) + (alloc_size - (size * 2))))->idx = header->max_blocks;                  \
+
+#define INIT(size, ptr)                                                                                 \
+{                                                                                                       \
+    const int page = getpagesize();                                                                     \
+    const int alloc_size = (size * 100) + page;                                                         \
+    void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
+    if (map == MAP_FAILED) { perror("mmap failed"); exit(42); }                                         \
+    if (ptr && ((header_t *)ptr)->full) {                                                               \
+        ((header_t *)map)->prev = ptr;                                                                  \
+        ((header_t *)ptr)->next = map;                                                                  \
+    } else {                                                                                            \
+        ((header_t *)map)->prev = nullptr;                                                              \
+        ((header_t *)map)->next = nullptr;                                                              \
+    }                                                                                                   \
+    ptr = map;                                                                                          \
+    printf("init ptr %p\n", ptr);                                                                       \
+    header_t *header = ptr;                                                                             \
+    header->free = 0;                                                                                   \
+    header->block_type = 0;                                                                             \
+    header->block_index = 1;                                                                            \
+    header->max_blocks = (alloc_size / size) - 1;                                                       \
+    header->full = false;                                                                               \
+    ((block_t *)(((char *)ptr) + size))->first = 1;                                                     \
+    ((block_t *)(((char *)ptr) + (alloc_size - (size))))->last = 1;                                     \
+    ((block_t *)(((char *)ptr) + (alloc_size - (size))))->idx = header->max_blocks;                     \
 }                     
 
 #define _MALLOC(size, t, ptr)                                                                           \
@@ -69,6 +69,65 @@
             header->block_index++;                                                                      \
         }                                                                                               \
         return ((char *)block + ALIGN(sizeof(block_t)))                     
+
+#define DEALLOC(start, size, ptr)                                                                       \
+    if (header->prev && header->next) {                                                                 \
+        ((header_t *)(header->prev))->next = header->next;                                              \
+        ptr = nullptr;                                                                                  \
+    } else if (header->next) {                                                                          \
+        ptr = header->next;                                                                             \
+    } else if (header->prev) {                                                                          \
+        ((header_t *)(header->prev))->next = nullptr;                                                   \
+        ptr = header->prev;                                                                             \
+    } else {                                                                                            \
+        ptr = nullptr;                                                                                  \
+    }                                                                                                   \
+    munmap(start, size);                                                                                
+
+#define SHOW_ALLOC_MEMORY(small, medium, large)                                                         \
+    _SHOW_ALLOC_MEMORY(small, TINY);                                                                    \
+    _SHOW_ALLOC_MEMORY(medium, SMALL);                                                                  \
+    _SHOW_ALLOC_MEMORY(large, LARGE)
+
+#define _SHOW_ALLOC_MEMORY(ptr, t) {                                                                    \
+    if (!ptr) return;                                                                                   \
+    void *list = ptr;                                                                                   \
+    while (((header_t *)list)->prev) {                                                                  \
+        list = ((header_t *)list)->prev;                                                                \
+    }                                                                                                   \
+    printf("%s : %p\n", #t, list);                                                                      \
+    void *first_chunk = list;                                                                           \
+    list = (char *)list + t;                                                                            \
+    while ((((char *)list) + t)) {                                                                      \
+        if (((block_t *)list)->last) {                                                                  \
+            if (((block_t *)list)->used) {                                                              \
+                printf(                                                                                 \
+                    "%p - %p : %ld bytes\n",                                                            \
+                    (char *)list + sizeof(block_t),                                                     \
+                    (char *)list + ((block_t *)list)->size + sizeof(block_t),                           \
+                    ((block_t *)list)->size                                                             \
+                    );                                                                                  \
+            }                                                                                           \
+            if (((header_t *)(first_chunk))->next) {                                                    \
+                list = ((header_t *)(first_chunk))->next;                                               \
+                first_chunk = ((header_t *)(first_chunk))->next;                                        \
+                printf("%s : %p\n",#t, list);                                                           \
+                list = (char *)list + t;                                                                \
+            } else {                                                                                    \
+                break;                                                                                  \
+            }                                                                                           \
+        }                                                                                               \
+        if(((block_t *)list)->used && !((block_t *)list)->free) {                                       \
+            printf(                                                                                     \
+                "%p - %p : %ld bytes\n",                                                                \
+                (char *)list + sizeof(block_t),                                                         \
+                (char *)list + ((block_t *)list)->size + sizeof(block_t),                               \
+                ((block_t *)list)->size                                                                 \
+                );                                                                                      \
+        }                                                                                               \
+        list = ((char *)list) + t;                                                                      \
+    }                                                                                                   \
+}
 
 typedef enum {
     E_TINY,
@@ -97,11 +156,6 @@ typedef struct header_s {
     void    *next;
     void    *prev;
 }   header_t;
-
-/* Chunk footer */
-typedef struct footer_s {
-    void *next;
-}   footer_t;
 
 typedef struct s_chunks {
     void            *small;
