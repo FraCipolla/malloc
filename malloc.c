@@ -7,13 +7,13 @@
 
 chunks g_chunks = {0};
 
-static void init(E_TYPES type)
+static void init(size_t size)
 {
-    switch (type)
+    switch (size)
     {
-    case E_TINY: INIT(TINY, g_chunks.small); break;
-    case E_SMALL: INIT(SMALL, g_chunks.medium); break;
-    default: INIT(LARGE, g_chunks.large); break;
+    case TINY: INIT(TINY, g_chunks.small); break;
+    case SMALL: INIT(SMALL, g_chunks.medium); break;
+    default: INIT(size, g_chunks.large); break;
     }
 }
 

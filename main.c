@@ -18,7 +18,7 @@ int main() {
         i++;
     }
     t[i + 1] = '\0';
-    ft_free(t);
+    // ft_free(t);
     // realloc
     // t = realloc(t, 150);
     // printf("%s\n", t);
@@ -38,8 +38,8 @@ int main() {
         tmp[0] = 'a';
     }
 
-    for (int i = 0; i < 50; i++) {
-        char *tmp = ft_malloc(5000);
+    for (int i = 0; i < 5; i++) {
+        char *tmp = ft_malloc(4000);
         tmp[0] = 'a';
     }
 
