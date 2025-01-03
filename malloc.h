@@ -26,35 +26,13 @@
 
 #define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
 
-#define INIT_LARGE(size, ptr)                                                                           \
-{                                                                                                       \
-    const int page = getpagesize();                                                                     \
-    const int alloc_size =size + sizeof(header_t) / page + 1;                                           \
-    void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
-    if (map == MAP_FAILED) { perror("mmap failed"); exit(42); }                                         \
-    if (ptr && ((header_t *)ptr)->full) {                                                               \
-        ((header_t *)map)->prev = ptr;                                                                  \
-        ((header_t *)ptr)->next = map;                                                                  \
-    } else {                                                                                            \
-        ((header_t *)map)->prev = nullptr;                                                              \
-        ((header_t *)map)->next = nullptr;                                                              \
-    }                                                                                                   \
-    ptr = map;                                                                                          \
-    printf("init ptr %p\n", ptr);                                                                       \
-    header_t *header = ptr;                                                                             \
-    header->free = 0;                                                                                   \
-    header->block_type = 2;                                                                             \
-    header->block_index = 1;                                                                            \
-    header->max_blocks = 1;                                                                             \
-    header->full = true;                                                                                \
-    header->block_size = size + sizeof(header_t);                                                       \
-}                     
-
 #define INIT(size, ptr)                                                                                 \
 {                                                                                                       \
-    if (!(size == TINY || size == SMALL)) { INIT_LARGE(size, ptr); return; }                            \
     const int page = getpagesize();                                                                     \
-    const int alloc_size = (size * 100) + page;                                                         \
+    const int alloc_size =                                                                              \
+            (size == TINY || size == SMALL) ?                                                           \
+            (size * 100) + page :                                                                       \
+            (size + sizeof(header_t) + sizeof(block_t)) / page + 1;                                     \
     void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
     if (map == MAP_FAILED) { perror("mmap failed"); exit(42); }                                         \
     if (ptr && ((header_t *)ptr)->full) {                                                               \
@@ -68,21 +46,28 @@
     printf("init ptr %p\n", ptr);                                                                       \
     header_t *header = ptr;                                                                             \
     header->free = 0;                                                                                   \
-    header->block_type = 0;                                                                             \
+    header->block_type = size == TINY ? 0 : size == SMALL ? 1 : 2;                                      \
     header->block_index = 1;                                                                            \
-    header->max_blocks = (alloc_size / size) - 1;                                                       \
-    header->full = false;                                                                               \
+    header->max_blocks = (size == TINY || size == SMALL) ? (alloc_size / size) - 1 : 1;                 \
+    header->full = (size == TINY || size == SMALL) ? false : true;                                      \
     header->block_size = size;                                                                          \
-    ((block_t *)(((char *)ptr) + size))->first = 1;                                                     \
-    ((block_t *)(((char *)ptr) + (alloc_size - (size))))->last = 1;                                     \
-    ((block_t *)(((char *)ptr) + (alloc_size - (size))))->idx = header->max_blocks;                     \
+    header->chunk_cap = alloc_size;                                                                     \
+    if (header->block_type == 2) {                                                                      \
+        ((block_t *)(((char *)ptr) + sizeof(header_t)))->last = 1;                                      \
+    } else {                                                                                            \
+        ((block_t *)(((char *)ptr) + size))->first = 1;                                                 \
+        ((block_t *)(((char *)ptr) + (alloc_size - (size))))->last = 1;                                 \
+        ((block_t *)(((char *)ptr) + (alloc_size - (size))))->idx = header->max_blocks;                 \
+    }                                                                                                   \
 }                     
 
 #define _MALLOC(size, t, ptr)                                                                           \
     if (!ptr || ((header_t *)ptr)->full) {                                                              \
             init((t == 0 ? TINY : t == 1 ? SMALL : size));                                              \
         }                                                                                               \
-        if (!(t == 0 || t == 1)) { return ((char *)ptr + ALIGN(sizeof(header_t))); }                    \
+        if (!(t == 0 || t == 1)) {                                                                      \
+            return ((char *)ptr + ALIGN((sizeof(header_t) + sizeof(block_t))));                         \
+        }                                                                                               \
         header_t *header = ptr;                                                                         \
         block_t *block = ptr + (header->block_index * (t == 0 ? TINY : t == 1 ? SMALL : size));         \
         block->size = size;                                                                             \
@@ -199,6 +184,7 @@ typedef struct header_s {
     int     block_index;
     int     max_blocks;
     size_t  block_size;
+    size_t  chunk_cap;
     int     free;
     bool    full;
     void    *next;

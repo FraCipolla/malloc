@@ -55,9 +55,10 @@ void ft_free(void *ptr)
     size_t size = 0;
 
     const int block_size = cast->type == E_TINY ? TINY : cast->type == E_SMALL ? SMALL : LARGE;
-    header_t *header = (header_t *)((char *)cast - (cast->idx * block_size));
+    header_t *header = cast->type == 2 ? (header_t *)((char *)cast - ALIGN(sizeof(header_t))) : (header_t *)((char *)cast - (cast->idx * block_size));
     header->free++;
-    if (header->free == header->max_blocks) {
+    printf("cast type %d\n", cast->type);
+    if (header->free == header->max_blocks || cast->type == 2) {
         size = (header->max_blocks + 2) * block_size;
         switch (cast->type)
         {
