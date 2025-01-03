@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #if __STDC_VERSION__ != 202311L
 #define false 0
@@ -30,11 +31,11 @@
 {                                                                                                       \
     const int page = getpagesize();                                                                     \
     const int alloc_size =                                                                              \
-            (size == TINY || size == SMALL) ?                                                           \
-            (size * 100) + page :                                                                       \
-            (size + sizeof(header_t) + sizeof(block_t)) / page + 1;                                     \
+            (size == TINY || size == SMALL) ?                                           \
+            ((size_t)size * 100) + page :                                                                       \
+            ((size + sizeof(header_t) + sizeof(block_t)) / page + 1) * page;                            \
     void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
-    if (map == MAP_FAILED) { perror("mmap failed"); exit(42); }                                         \
+    if (map == MAP_FAILED) { exit(42); }                                         \
     if (ptr && ((header_t *)ptr)->full) {                                                               \
         ((header_t *)map)->prev = ptr;                                                                  \
         ((header_t *)ptr)->next = map;                                                                  \
@@ -43,7 +44,6 @@
         ((header_t *)map)->next = nullptr;                                                              \
     }                                                                                                   \
     ptr = map;                                                                                          \
-    printf("init ptr %p\n", ptr);                                                                       \
     header_t *header = ptr;                                                                             \
     header->free = 0;                                                                                   \
     header->block_type = size == TINY ? 0 : size == SMALL ? 1 : 2;                                      \
@@ -65,11 +65,9 @@
     if (!ptr || ((header_t *)ptr)->full) {                                                              \
             init((t == 0 ? TINY : t == 1 ? SMALL : size));                                              \
         }                                                                                               \
-        if (!(t == 0 || t == 1)) {                                                                      \
-            return ((char *)ptr + ALIGN((sizeof(header_t) + sizeof(block_t))));                         \
-        }                                                                                               \
         header_t *header = ptr;                                                                         \
-        block_t *block = ptr + (header->block_index * (t == 0 ? TINY : t == 1 ? SMALL : size));         \
+        block_t *block = !(t == 0 || t == 1) ? ptr + ALIGN(sizeof(header_t)) :                          \
+                         ptr + (header->block_index * (t == 0 ? TINY : t == 1 ? SMALL : size));         \
         block->size = size;                                                                             \
         block->used = 1;                                                                                \
         block->type = t;                                                                                \
@@ -109,7 +107,6 @@
     }                                                                                                   \
     printf("%s : %p\n", #t, list);                                                                      \
     void *first_chunk = list;                                                                           \
-    printf("header block->size %ld\n", ((header_t *)list)->block_size);                                 \
     list = (char *)list + (((header_t *)list)->block_size);                                             \
     while (42) {                                                                                        \
         if (((block_t *)list)->last) {                                                                  \
@@ -197,10 +194,12 @@ typedef struct s_chunks {
     void            *large;
 }   chunks;
 
-void ft_free(void *ptr);
-void *ft_malloc(size_t size);
+extern chunks g_chunks;
+
+void free(void *ptr);
+void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
-void show_alloc_memory();
-void show_alloc_mem_ex();
+// void show_alloc_memory();
+// void show_alloc_mem_ex();
 
 #endif

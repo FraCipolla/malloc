@@ -1,13 +1,8 @@
 #include "malloc.h"
 
-#include <stdio.h>
-#include <bits/mman-linux.h>
-#include <string.h>
-#include <stdlib.h>
-
 chunks g_chunks = {0};
 
-static void init(size_t size)
+static inline void init(size_t size)
 {
     switch (size)
     {
@@ -17,7 +12,7 @@ static void init(size_t size)
     }
 }
 
-void *ft_malloc(size_t size)
+void *malloc(size_t size)
 {
     if (size <= (TINY - ALIGN(sizeof(block_t)))) {
         _MALLOC(size, E_TINY, g_chunks.small);
@@ -37,15 +32,15 @@ void *realloc(void *ptr, size_t size)
     block_t *cast = (block_t *)((char *)ptr - ALIGN(sizeof(block_t)));
     size_t block_size = cast->type == 0 ? TINY : cast->type == 1 ? SMALL : LARGE;
     if (offset > block_size) {
-        void *new = ft_malloc(size);
+        void *new = malloc(size);
         memcpy(new, ptr, cast->size);
-        ft_free(ptr);
+        free(ptr);
         return new;
     }
     return ptr;
 }
 
-void ft_free(void *ptr)
+void free(void *ptr)
 {
     if (!ptr) { return ;}
 
@@ -55,11 +50,11 @@ void ft_free(void *ptr)
     size_t size = 0;
 
     const int block_size = cast->type == E_TINY ? TINY : cast->type == E_SMALL ? SMALL : LARGE;
-    header_t *header = cast->type == 2 ? (header_t *)((char *)cast - ALIGN(sizeof(header_t))) : (header_t *)((char *)cast - (cast->idx * block_size));
+    header_t *header = cast->type == 2 ? (header_t *)((char *)cast - ALIGN(sizeof(header_t)))   \
+                                        : (header_t *)((char *)cast - (cast->idx * block_size));
     header->free++;
-    printf("cast type %d\n", cast->type);
     if (header->free == header->max_blocks || cast->type == 2) {
-        size = (header->max_blocks + 2) * block_size;
+        size = header->chunk_cap;
         switch (cast->type)
         {
         case E_TINY: DEALLOC(header, size, g_chunks.small); break;
@@ -69,7 +64,7 @@ void ft_free(void *ptr)
     }
 }
 
-void show_alloc_memory()
-{
-    SHOW_ALLOC_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);
-}
+// void show_alloc_memory()
+// {
+//     SHOW_ALLOC_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);
+// }

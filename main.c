@@ -28,20 +28,20 @@ int main() {
     // printf("%s\n", t);
 
     // free
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 500; i++) {
         char *tmp = ft_malloc(100);
         tmp[0] = 'a';
         ft_free(tmp);
     }
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 500; i++) {
         char *tmp = ft_malloc(500);
         tmp[0] = 'a';
         ft_free(tmp);
     }
 
     for (int i = 0; i < 5; i++) {
-        char *tmp = ft_malloc(4000);
+        char *tmp = ft_malloc(4090);
         tmp[0] = 'a';
         ft_free(tmp);
     }
