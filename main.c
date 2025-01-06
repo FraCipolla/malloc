@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "malloc.h"
 
-void    print(char *s)
+void    prints(char *s)
 {
     write(1, s, strlen(s));
 }
@@ -19,12 +19,13 @@ int     main(void)
         addr = (char*)malloc(1024);
         if (addr == NULL)
         {
-            print("Failed to allocate memory\n");
+            prints("Failed to allocate memory\n");
             return (1);
         }
         addr[0] = 42;
         free(addr); 
         i++; 
     }
+    // show_alloc_memory();
     return (0);
 }

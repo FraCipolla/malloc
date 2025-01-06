@@ -8,6 +8,9 @@
         "array": "c",
         "string_view": "c",
         "initializer_list": "c",
-        "utility": "c"
+        "utility": "c",
+        "ranges": "c",
+        "span": "c",
+        "list": "c"
     }
 }
