@@ -28,16 +28,12 @@ void *realloc(void *ptr, size_t size)
     if (!ptr) {
         return nullptr;
     }
-    size_t offset = size + ALIGN(sizeof(block_t));
+
     block_t *cast = (block_t *)((char *)ptr - ALIGN(sizeof(block_t)));
-    size_t block_size = cast->type == 0 ? TINY : cast->type == 1 ? SMALL : LARGE;
-    if (offset > block_size) {
-        void *new = malloc(size);
-        memcpy(new, ptr, cast->size);
-        free(ptr);
-        return new;
-    }
-    return ptr;
+    void *new = malloc(size);
+    memcpy(new, ptr, cast->size);
+    free(ptr);
+    return new;
 }
 
 void free(void *ptr)
@@ -48,12 +44,13 @@ void free(void *ptr)
     block_t *cast = ptr;
     cast->free = 1;
     size_t size = 0;
+    while (cast && cast->prev) {
+        cast = cast->prev;
+    }
 
-    const int block_size = cast->type == E_TINY ? TINY : cast->type == E_SMALL ? SMALL : LARGE;
-    header_t *header = cast->type == 2 ? (header_t *)((char *)cast - ALIGN(sizeof(header_t)))   \
-                                        : (header_t *)((char *)cast - (cast->idx * block_size));
-    header->free++;
-    if (header->free == header->max_blocks || cast->type == 2) {
+    header_t *header = (header_t *)((char *)cast - ALIGN(sizeof(header_t)));
+    header->free_blocks++;
+    if (header->full && header->free_blocks == header->max_blocks) {
         size = header->chunk_cap;
         switch (cast->type)
         {

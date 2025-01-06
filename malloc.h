@@ -18,22 +18,22 @@
 #define DEBUG(x) write(1, x, strlen(x))
 
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
-#define ALIGNMENT sizeof(block_t) // must be a power of 2
+#define ALIGNMENT (2 * sizeof(size_t))
 #define ALIGN(size) (((size) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 
-#define TINY (1 << 8)
-#define SMALL (1 << 10)
-#define LARGE (1 << 12)
+#define TINY 512
+#define SMALL 2048
+#define LARGE (1 << 16)
 
 #define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
 
 #define INIT(size, ptr)                                                                                 \
 {                                                                                                       \
-    const int page = getpagesize();                                                                     \
+    const int page =  sysconf(_SC_PAGESIZE);                                                                     \
     const int alloc_size =                                                                              \
             (size == TINY || size == SMALL) ?                                           \
             ((size_t)size * 100) + page :                                                                       \
-            ((size + sizeof(header_t) + sizeof(block_t)) / page + 1) * page;                            \
+            ((size + ALIGN(sizeof(header_t)) + ALIGN(sizeof(block_t))) / page + 1) * page;                            \
     void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
     if (map == MAP_FAILED) { exit(42); }                                         \
     if (ptr && ((header_t *)ptr)->full) {                                                               \
@@ -45,20 +45,13 @@
     }                                                                                                   \
     ptr = map;                                                                                          \
     header_t *header = ptr;                                                                             \
-    header->free = 0;                                                                                   \
+    header->max_blocks = 0;                                                                             \
+    header->free_blocks = 0;                                                                            \
+    header->offset = ALIGN(sizeof(header_t));                                                           \
     header->block_type = size == TINY ? 0 : size == SMALL ? 1 : 2;                                      \
-    header->block_index = 1;                                                                            \
-    header->max_blocks = (size == TINY || size == SMALL) ? (alloc_size / size) - 1 : 1;                 \
     header->full = (size == TINY || size == SMALL) ? false : true;                                      \
-    header->block_size = size;                                                                          \
+    header->free = 0;                                                                                   \
     header->chunk_cap = alloc_size;                                                                     \
-    if (header->block_type == 2) {                                                                      \
-        ((block_t *)(((char *)ptr) + sizeof(header_t)))->last = 1;                                      \
-    } else {                                                                                            \
-        ((block_t *)(((char *)ptr) + size))->first = 1;                                                 \
-        ((block_t *)(((char *)ptr) + (alloc_size - (size))))->last = 1;                                 \
-        ((block_t *)(((char *)ptr) + (alloc_size - (size))))->idx = header->max_blocks;                 \
-    }                                                                                                   \
 }                     
 
 #define _MALLOC(size, t, ptr)                                                                           \
@@ -66,33 +59,37 @@
             init((t == 0 ? TINY : t == 1 ? SMALL : size));                                              \
         }                                                                                               \
         header_t *header = ptr;                                                                         \
-        block_t *block = !(t == 0 || t == 1) ? ptr + ALIGN(sizeof(header_t)) :                          \
-                         ptr + (header->block_index * (t == 0 ? TINY : t == 1 ? SMALL : size));         \
+        block_t *block = (block_t *)((char *)ptr + header->offset);                                     \
+        if (header->offset == ALIGN(sizeof(header_t))) {                                                \
+            block->prev = nullptr;                                                                      \
+        }                                                                                               \
+        header->max_blocks++;                                                                           \
         block->size = size;                                                                             \
         block->used = 1;                                                                                \
         block->type = t;                                                                                \
         block->free = 0;                                                                                \
-        block->idx = header->block_index;                                                               \
-        if (block->idx == header->max_blocks) {                                                         \
-            header->full = true;                                                                        \
+        header->offset += ALIGN(size + sizeof(block_t));                                                \
+        if (header->offset + ALIGN(sizeof(block_t) + t == 0 ? TINY : t == 1 ? SMALL : 0)                   \
+            < header->chunk_cap && t != 2) {                                                            \
+            ((block_t *)((char *)ptr + header->offset))->prev = block;                                  \
         } else {                                                                                        \
-            header->block_index++;                                                                      \
+            header->full = 1;                                                                           \
         }                                                                                               \
         return ((char *)block + ALIGN(sizeof(block_t)))                     
 
-#define DEALLOC(start, size, ptr)                                                                       \
+#define DEALLOC(header, size, ptr)                                                                      \
     if (header->prev && header->next) {                                                                 \
         ((header_t *)(header->prev))->next = header->next;                                              \
-        ptr = nullptr;                                                                                  \
     } else if (header->next) {                                                                          \
-        ptr = header->next;                                                                             \
+        header = header->next;                                                                             \
     } else if (header->prev) {                                                                          \
         ((header_t *)(header->prev))->next = nullptr;                                                   \
-        ptr = header->prev;                                                                             \
+        header = header->prev;                                                                             \
     } else {                                                                                            \
         ptr = nullptr;                                                                                  \
     }                                                                                                   \
-    munmap(start, size);                                                                                
+    madvise(header, size, MADV_DONTNEED); \
+    munmap((void *)header, size);                                                                       
 
 #define SHOW_ALLOC_MEMORY(small, medium, large)                                                         \
     _SHOW_ALLOC_MEMORY(small, TINY);                                                                    \
@@ -165,27 +162,26 @@ typedef enum {
 }   E_TYPES;
 
 typedef struct {
-   size_t               :2;     /* Paddings bits */
-   size_t type          :2;     /* Type of block: tiny(0), small(1) or large(2) */
-   size_t first         :1;     /* Marks the first block */
-   size_t last          :1;     /* Marks the last block */
-   size_t used          :1;     /* Whether the block is used */
-   size_t free          :1;     /* Whether the block is being freed after used */
-   size_t idx           :8;     /* Block index, for debugging purpose */
-   size_t size          ;       /* Block size in bytes. Max 2^32 or 2^64 depending on system architecture */
+   uint8_t                      :4;     /* Paddings bits */
+   uint8_t  type                :2;     /* Type of block */
+   uint8_t  used                :1;     /* Whether the block is used */
+   uint8_t  free                :1;     /* Whether the block is being freed after used */
+   uint16_t size                  ;     /* Block size */
+   void     *prev;                ;     /* Prev block */
 } block_t;
 
 /* Chunk header size = 40 */
 typedef struct header_s {
-    int     block_type;
-    int     block_index;
-    int     max_blocks;
-    size_t  block_size;
-    size_t  chunk_cap;
-    int     free;
-    bool    full;
-    void    *next;
-    void    *prev;
+    uint8_t                     :5;
+    uint8_t     block_type      :2;
+    uint8_t     full            :1;
+    uint8_t     free            :1;
+    uint8_t     free_blocks       ;
+    uint8_t     max_blocks        ;
+    size_t      offset;
+    size_t      chunk_cap;
+    void        *next;
+    void        *prev;
 }   header_t;
 
 typedef struct s_chunks {

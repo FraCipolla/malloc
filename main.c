@@ -1,50 +1,30 @@
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 #include "malloc.h"
 
-void p(char *s) {
-    printf("%s\n", s);
+void    print(char *s)
+{
+    write(1, s, strlen(s));
 }
 
-int main() {
-    printf("sizeof t_header: %ld\n", sizeof(block_t));
-    printf("Alignment: %ld\n", ALIGN(sizeof(block_t)));
-    char *t = ft_malloc(100);
-    
-    char *buff = "stringa di copia da copiare";
-    int i = 0;
-    while (buff[i]) {
-        t[i] = buff[i];
-        i++;
-    }
-    t[i + 1] = '\0';
-    ft_free(t);
-    // realloc
-    // t = realloc(t, 150);
-    // printf("%s\n", t);
-    // t = realloc(t, 150);
-    // printf("%s\n", t);
-    // t = realloc(t, 300);
-    // printf("%s\n", t);
+int     main(void)
+{
+    int   i;
+    char  *addr;
 
-    // free
-    for (int i = 0; i < 500; i++) {
-        char *tmp = ft_malloc(100);
-        tmp[0] = 'a';
-        ft_free(tmp);
+    i = 0;
+    while (i < 1024) 
+    {
+        addr = (char*)malloc(1024);
+        if (addr == NULL)
+        {
+            print("Failed to allocate memory\n");
+            return (1);
+        }
+        addr[0] = 42;
+        free(addr); 
+        i++; 
     }
-
-    for (int i = 0; i < 500; i++) {
-        char *tmp = ft_malloc(500);
-        tmp[0] = 'a';
-        ft_free(tmp);
-    }
-
-    for (int i = 0; i < 5; i++) {
-        char *tmp = ft_malloc(4090);
-        tmp[0] = 'a';
-        ft_free(tmp);
-    }
-
-    show_alloc_memory();
+    return (0);
 }

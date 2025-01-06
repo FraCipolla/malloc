@@ -28,6 +28,6 @@ clean:
 	rm -fr $(OBJ)
 
 fclean: clean
-	rm -rf $(NAME)
+	rm -rf $(NAME) $(HOSTLIB)
 
 re: fclean all
