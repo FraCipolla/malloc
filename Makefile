@@ -7,11 +7,11 @@ NAME = libft_malloc.so
 HOSTLIB = libft_malloc_$(HOSTTYPE).so
 
 CC=gcc
-FLAGS        = # -std=gnu99 -Iinclude
-CFLAGS       = -fPIC -g -Wall -Wextra -g -Werror
-LDFLAGS      = -shared
-SRC=malloc.c
-INCLUDES=malloc.h
+CFLAGS       	= -Wall -Wextra -g -Werror -I/
+LDFLAGS      	= -shared
+SRC				= malloc.c
+INCLUDES		= malloc.h
+MK_OBJ_FLAGS 	= -fPIC
 OBJ=$(SRC:%.c=%.o)
 
 all: $(NAME)
@@ -22,7 +22,10 @@ $(NAME) : $(HOSTLIB)
 
 ${HOSTLIB}: ${OBJ}
 	@echo compiling libft_malloc.so
-	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $(OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(HOSTLIB)
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(MK_OBJ_FLAGS) -MMD -MT $@ -c $< -o $@
 
 clean:
 	rm -fr $(OBJ)

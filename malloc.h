@@ -8,11 +8,16 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Mutex for thread safe malloc */
+#include <pthread.h>
+extern pthread_mutex_t	g_mutex;
+
+
 #if __STDC_VERSION__ != 202311L
-#define false 0
-#define true !false
-#define nullptr NULL
-#include <stdbool.h>
+    #define false 0 
+    #define true !false
+    #define nullptr NULL
+    #include <stdbool.h>
 #endif
 
 #define DEBUG(x) write(1, x, strlen(x))
@@ -23,7 +28,7 @@
 
 #define TINY 512
 #define SMALL 2048
-#define LARGE (1 << 16)
+#define LARGE INT64_MAX
 
 #define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
 
@@ -34,6 +39,7 @@
             (size == TINY || size == SMALL) ?                                                           \
             ((100 / (page / size)) + 1) * page :                                                        \
             ((size + ALIGN(sizeof(header_t)) + ALIGN(sizeof(block_t))) / page + 1) * page;              \
+    /* println("%s", alloc_size % 4096 == 0 ? "aligned" : "not aligned"); */\
     void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
     if (map == MAP_FAILED) { exit(42); }                                                                \
     if (ptr && ((header_t *)ptr)->full) {                                                               \
@@ -58,6 +64,7 @@
     if (!ptr || ((header_t *)ptr)->full) {                                                              \
             init((t == 0 ? TINY : t == 1 ? SMALL : size));                                              \
         }                                                                                               \
+        pthread_mutex_lock(&g_mutex);                                                                   \
         header_t *header = ptr;                                                                         \
         block_t *block = (block_t *)((char *)ptr + ALIGN(header->offset));                              \
         if (header->offset == ALIGN(sizeof(header_t))) {                                                \
@@ -76,6 +83,7 @@
             header->full = 1;                                                                           \
             block->last = 1;                                                                            \
         }                                                                                               \
+        pthread_mutex_unlock(&g_mutex);                                                                 \
         return ((void *)((char *)block + ALIGN(sizeof(block_t))))                     
 
 #define DEALLOC(header, size, ptr)                                                                      \
@@ -89,7 +97,8 @@
     } else {                                                                                            \
         ptr = nullptr;                                                                                  \
     }                                                                                                   \
-    munmap((void *)header, size);                                                                       
+    munmap((char *)header, size);                                                                       \
+    // memset((char *)header, 0, size);
 
 #define SHOW_ALLOC_MEMORY(small, medium, large)                                                         \
     _SHOW_ALLOC_MEMORY(small, TINY);                                                                    \

@@ -1,7 +1,8 @@
 #include "malloc.h"
 #include <stdarg.h>
 
-chunks g_chunks = {0};
+chunks              g_chunks = {0};
+pthread_mutex_t		g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void println(const char *fmt, ...)
 {
@@ -86,25 +87,35 @@ void *realloc(void *ptr, size_t size)
         return nullptr;
     }
 
+    pthread_mutex_lock(&g_mutex);
     block_t *cast = (block_t *)((char *)ptr - ALIGN(sizeof(block_t)));
     void *new = malloc(size);
-    memcpy(new, ptr, cast->size);
+    for (long unsigned int i = 0; i < cast->size + ALIGN(sizeof(block_t)); i++) {
+        *(char *)(new + i) = *(char *)(ptr + i);
+    }
     free(ptr);
-    return new;
+    ((block_t *)new)->size = size;
+    pthread_mutex_unlock(&g_mutex);
+    return ((void *)((char *)new + ALIGN(sizeof(block_t))));
 }
 
 void free(void *ptr)
 {
     if (!ptr) { return ;}
 
+    pthread_mutex_lock(&g_mutex);
     ptr = (char *)ptr - ALIGN(sizeof(block_t));
     block_t *cast = ptr;
     cast->free = 1;
     size_t size = 0;
+    if (cast->prev) {
+        block_t *next = (block_t *)((char *)cast + ALIGN(sizeof(cast->size)));
+        next->prev = cast->prev; 
+    }
     while (cast && cast->prev) {
         cast = cast->prev;
     }
-
+    memset(cast, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
     header_t *header = (header_t *)((char *)cast - ALIGN(sizeof(header_t)));
     header->free_blocks++;
     
@@ -117,9 +128,26 @@ void free(void *ptr)
         default: DEALLOC(header, size, g_chunks.large); break;
         }
     }
+    pthread_mutex_unlock(&g_mutex);
 }
 
 void show_alloc_memory()
 {
+    pthread_mutex_lock(&g_mutex);
     SHOW_ALLOC_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);
+    pthread_mutex_unlock(&g_mutex);
 }
+
+// void hex_dump(void *ptr, size_t size) {
+//     unsigned char *byte_ptr = (unsigned char *)ptr;
+//     for (size_t i = 0; i < size; i++) {
+//         // Print each byte as two hexadecimal characters
+//         printf("%02x ", byte_ptr[i]);
+
+//         // Print a newline every 16 bytes for better readability
+//         if ((i + 1) % 16 == 0) {
+//             printf("\n");
+//         }
+//     }
+//     printf("\n");
+// }

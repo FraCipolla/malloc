@@ -11,6 +11,13 @@
         "utility": "c",
         "ranges": "c",
         "span": "c",
-        "list": "c"
+        "list": "c",
+        "complex": "c",
+        "*.tcc": "c",
+        "memory": "c",
+        "istream": "c",
+        "functional": "c",
+        "tuple": "c",
+        "variant": "c"
     }
 }
