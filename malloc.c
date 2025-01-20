@@ -108,25 +108,19 @@ void free(void *ptr)
     ptr = (char *)ptr - ALIGN(sizeof(block_t));
     block_t *cast = ptr;
     block_t *start = cast;
+    header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
     cast->free = 1;
     size_t size = 0;
-    // if (cast->prev) {
-    //     block_t *next = (block_t *)((char *)cast + ALIGN(sizeof(cast->size)));
-    //     next->prev = cast->prev; 
-    // }
-    while (cast && cast->prev) {
+    while (cast->prev) {
         cast = cast->prev;
     }
-    // memset(cast, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
     header_t *header = (header_t *)((char *)cast - ALIGN(sizeof(header_t)));
-    if ((char *)header + ALIGN(header->offset) == (char *)ptr + ALIGN(start->size + sizeof(block_t))) {
-        println("before %d", header->offset);
-        header->offset = header->offset - ALIGN(sizeof(start->size + sizeof(block_t)));
-        println("after %d", header->offset);
+    if ((char *)head + ALIGN(head->offset) == (char *)ptr + ALIGN(start->size + sizeof(block_t))) {
+        head->offset = head->offset - start->size - ALIGN(sizeof(sizeof(block_t)));
         memset(start, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
-        // header->free--;
+        head->free_blocks--;
     } else {
-        header->free_blocks++;
+        head->free_blocks++;
     }
     
     if (header->full && header->free_blocks == header->max_blocks) {
@@ -148,16 +142,16 @@ void show_alloc_memory()
     pthread_mutex_unlock(&g_mutex);
 }
 
-// void hex_dump(void *ptr, size_t size) {
-//     unsigned char *byte_ptr = (unsigned char *)ptr;
-//     for (size_t i = 0; i < size; i++) {
-//         // Print each byte as two hexadecimal characters
-//         printf("%02x ", byte_ptr[i]);
+void hex_dump(void *ptr, size_t size) {
+    unsigned char *byte_ptr = (unsigned char *)ptr;
+    for (size_t i = 0; i < size; i++) {
+        // Print each byte as two hexadecimal characters
+        println("%02x ", byte_ptr[i]);
 
-//         // Print a newline every 16 bytes for better readability
-//         if ((i + 1) % 16 == 0) {
-//             printf("\n");
-//         }
-//     }
-//     printf("\n");
-// }
+        // Print a newline every 16 bytes for better readability
+        if ((i + 1) % 16 == 0) {
+            println("");
+        }
+    }
+    println("");
+}

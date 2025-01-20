@@ -75,7 +75,7 @@ extern pthread_mutex_t	g_mutex;
         block->used = 1;                                                                                \
         block->type = t;                                                                                \
         block->free = 0;                                                                                \
-        header->offset += ALIGN(size + sizeof(block_t));                                                \
+        header->offset += size + ALIGN(sizeof(block_t));                                                \
         if (header->offset + ALIGN(sizeof(block_t) + t == 0 ? TINY : t == 1 ? SMALL : 0)                \
             < header->chunk_cap && t != 2) {                                                            \
             ((block_t *)((char *)ptr + header->offset))->prev = block;                                  \

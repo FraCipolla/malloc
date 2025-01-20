@@ -19,6 +19,7 @@ all: $(NAME)
 $(NAME) : $(HOSTLIB)
 	@echo creating symbolic link
 	ln -fs ${HOSTLIB} ${NAME}
+	mv libft_malloc*.so tests/
 
 ${HOSTLIB}: ${OBJ}
 	@echo compiling libft_malloc.so
