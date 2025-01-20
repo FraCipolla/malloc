@@ -62,6 +62,7 @@ void println(const char *fmt, ...)
 
 static inline void init(size_t size)
 {
+    DEBUG("init\n");
     switch (size)
     {
     case TINY: INIT(TINY, g_chunks.small); break;
@@ -106,18 +107,27 @@ void free(void *ptr)
     pthread_mutex_lock(&g_mutex);
     ptr = (char *)ptr - ALIGN(sizeof(block_t));
     block_t *cast = ptr;
+    block_t *start = cast;
     cast->free = 1;
     size_t size = 0;
-    if (cast->prev) {
-        block_t *next = (block_t *)((char *)cast + ALIGN(sizeof(cast->size)));
-        next->prev = cast->prev; 
-    }
+    // if (cast->prev) {
+    //     block_t *next = (block_t *)((char *)cast + ALIGN(sizeof(cast->size)));
+    //     next->prev = cast->prev; 
+    // }
     while (cast && cast->prev) {
         cast = cast->prev;
     }
-    memset(cast, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
+    // memset(cast, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
     header_t *header = (header_t *)((char *)cast - ALIGN(sizeof(header_t)));
-    header->free_blocks++;
+    if ((char *)header + ALIGN(header->offset) == (char *)ptr + ALIGN(start->size + sizeof(block_t))) {
+        println("before %d", header->offset);
+        header->offset = header->offset - ALIGN(sizeof(start->size + sizeof(block_t)));
+        println("after %d", header->offset);
+        memset(start, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
+        // header->free--;
+    } else {
+        header->free_blocks++;
+    }
     
     if (header->full && header->free_blocks == header->max_blocks) {
         size = header->chunk_cap;
