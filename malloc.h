@@ -20,14 +20,16 @@ extern pthread_mutex_t	g_mutex;
     #include <stdbool.h>
 #endif
 
-#define DEBUG(x) write(1, x, strlen(x))
+#define MALLOC_PAGE_SIZE	sysconf(_SC_PAGESIZE)
 
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
-#define ALIGNMENT 64
+#define ALIGNMENT (2 * sizeof(size_t))
 #define ALIGN(size) (((size) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
+#define HEADER_ALIGN() (((sizeof(header_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
+#define BLOCK_ALIGN() (((sizeof(block_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 
-#define TINY 512
-#define SMALL 2048
+#define TINY 1024
+#define SMALL 4096
 #define LARGE INT64_MAX
 
 #define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
@@ -38,8 +40,7 @@ extern pthread_mutex_t	g_mutex;
     const size_t alloc_size =                                                                           \
             (size == TINY || size == SMALL) ?                                                           \
             ((100 / (page / size)) + 1) * page :                                                        \
-            ((size + ALIGN(sizeof(header_t)) + ALIGN(sizeof(block_t))) / page + 1) * page;              \
-    /* println("%s", alloc_size % 4096 == 0 ? "aligned" : "not aligned"); */\
+            ((size + HEADER_ALIGN() + BLOCK_ALIGN()) / page + 1) * page;                                \
     void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
     if (map == MAP_FAILED) { exit(42); }                                                                \
     if (ptr && ((header_t *)ptr)->full) {                                                               \
@@ -53,7 +54,7 @@ extern pthread_mutex_t	g_mutex;
     header_t *header = ptr;                                                                             \
     header->max_blocks = 0;                                                                             \
     header->free_blocks = 0;                                                                            \
-    header->offset = ALIGN(sizeof(header_t));                                                           \
+    header->offset = HEADER_ALIGN();                                                                    \
     header->block_type = size == TINY ? 0 : size == SMALL ? 1 : 2;                                      \
     header->full = (size == TINY || size == SMALL) ? false : true;                                      \
     header->free = 0;                                                                                   \
@@ -61,30 +62,34 @@ extern pthread_mutex_t	g_mutex;
 }                     
 
 #define _MALLOC(size, t, ptr)                                                                           \
+    pthread_mutex_lock(&g_mutex);                                                                       \
     if (!ptr || ((header_t *)ptr)->full) {                                                              \
-            init((t == 0 ? TINY : t == 1 ? SMALL : size));                                              \
-        }                                                                                               \
-        pthread_mutex_lock(&g_mutex);                                                                   \
-        header_t *header = ptr;                                                                         \
-        block_t *block = (block_t *)((char *)ptr + ALIGN(header->offset));                              \
-        if (header->offset == ALIGN(sizeof(header_t))) {                                                \
-            block->prev = nullptr;                                                                      \
-        }                                                                                               \
-        header->max_blocks++;                                                                           \
-        block->size = size;                                                                             \
-        block->used = 1;                                                                                \
-        block->type = t;                                                                                \
-        block->free = 0;                                                                                \
-        header->offset += size + ALIGN(sizeof(block_t));                                                \
-        if (header->offset + ALIGN(sizeof(block_t) + t == 0 ? TINY : t == 1 ? SMALL : 0)                \
-            < header->chunk_cap && t != 2) {                                                            \
-            ((block_t *)((char *)ptr + header->offset))->prev = block;                                  \
-        } else {                                                                                        \
-            header->full = 1;                                                                           \
-            block->last = 1;                                                                            \
-        }                                                                                               \
-        pthread_mutex_unlock(&g_mutex);                                                                 \
-        return ((void *)((char *)block + ALIGN(sizeof(block_t))))                     
+        init((t == 0 ? TINY : t == 1 ? SMALL : size));                                                  \
+    }                                                                                                   \
+    header_t *header = ptr;                                                                             \
+    if (header->offset == HEADER_ALIGN()) {                                                             \
+        ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = nullptr;                             \
+        ((block_t *)((char *)ptr + ALIGN(header->offset)))->first = 1;                                  \
+    }                                                                                                   \
+    block_t *block = (block_t *)((char *)ptr + ALIGN(header->offset));                                  \
+    header->max_blocks++;                                                                               \
+    block->size = size;                                                                                 \
+    block->used = 1;                                                                                    \
+    block->type = t;                                                                                    \
+    block->free = 0;                                                                                    \
+    block->last = 1;                                                                                    \
+    block->next = nullptr;                                                                              \
+    header->offset += size + BLOCK_ALIGN();                                                             \
+    if (block->prev) {                                                                                  \
+        (block->prev)->next = block;                                                                    \
+    }                                                                                                   \
+    ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = block;                                   \
+    if ((header->offset + BLOCK_ALIGN() + (t == 0 ? TINY : t == 1 ? SMALL : 0)                          \
+        > header->chunk_cap && t != 2)) {                                                               \
+        header->full = 1;                                                                               \
+    }                                                                                                   \
+    pthread_mutex_unlock(&g_mutex);                                                                     \
+    return ((void *)((char *)block + BLOCK_ALIGN()))                         
 
 #define DEALLOC(header, size, ptr)                                                                      \
     if (header->prev && header->next) {                                                                 \
@@ -97,8 +102,7 @@ extern pthread_mutex_t	g_mutex;
     } else {                                                                                            \
         ptr = nullptr;                                                                                  \
     }                                                                                                   \
-    munmap((char *)header, size);                                                                       \
-    // memset((char *)header, 0, size);
+    munmap((char *)header, size);
 
 #define SHOW_ALLOC_MEMORY(small, medium, large)                                                         \
     _SHOW_ALLOC_MEMORY(small, TINY);                                                                    \
@@ -106,17 +110,34 @@ extern pthread_mutex_t	g_mutex;
     // _SHOW_ALLOC_MEMORY_LARGE(large)
 
 #define _SHOW_ALLOC_MEMORY(ptr, t) {                                                                    \
-    if (!ptr) return;                                                                                   \
-    void *list = ptr;                                                                                   \
-    while (((header_t *)list)->prev) {                                                                  \
-        list = ((header_t *)list)->prev;                                                                \
-    }                                                                                                   \
-    println("%s : %p", #t, list);                                                                       \
-    void *first_chunk = list;                                                                           \
-    list = ((char *)list + ALIGN(sizeof(header_t)));                                                    \
-    while (42) {                                                                                        \
-        if (((block_t *)list)->last) {                                                                  \
-            if (((block_t *)list)->used) {                                                              \
+    if (ptr) {                                                                                          \
+        void *list = ptr;                                                                               \
+        while (((header_t *)list)->prev) {                                                              \
+            list = ((header_t *)list)->prev;                                                            \
+        }                                                                                               \
+        println("%s : %p", #t, list);                                                                   \
+        void *first_chunk = list;                                                                       \
+        list = ((char *)list + HEADER_ALIGN());                                                         \
+        while (42) {                                                                                    \
+            if (((block_t *)list)->last) {                                                              \
+                if (((block_t *)list)->used) {                                                          \
+                    println(                                                                            \
+                        "%p - %p : %d bytes",                                                           \
+                        (char *)list + sizeof(block_t),                                                 \
+                        (char *)list + ((block_t *)list)->size + sizeof(block_t),                       \
+                        ((block_t *)list)->size                                                         \
+                        );                                                                              \
+                }                                                                                       \
+                if (((header_t *)(first_chunk))->next) {                                                \
+                    list = ((header_t *)(first_chunk))->next;                                           \
+                    first_chunk = ((header_t *)(first_chunk))->next;                                    \
+                    println("%s : %p",#t, list);                                                        \
+                    list = ((char *)list + HEADER_ALIGN());                                             \
+                } else {                                                                                \
+                    break;                                                                              \
+                }                                                                                       \
+            }                                                                                           \
+            if(((block_t *)list)->used && !((block_t *)list)->free) {                                   \
                 println(                                                                                \
                     "%p - %p : %d bytes",                                                               \
                     (char *)list + sizeof(block_t),                                                     \
@@ -124,24 +145,8 @@ extern pthread_mutex_t	g_mutex;
                     ((block_t *)list)->size                                                             \
                     );                                                                                  \
             }                                                                                           \
-            if (((header_t *)(first_chunk))->next) {                                                    \
-                list = ((header_t *)(first_chunk))->next;                                               \
-                first_chunk = ((header_t *)(first_chunk))->next;                                        \
-                println("%s : %p",#t, list);                                                            \
-                list = ((char *)list + ALIGN(sizeof(header_t)));                                        \
-            } else {                                                                                    \
-                break;                                                                                  \
-            }                                                                                           \
+            list = (char *)list + ALIGN((((block_t *)list)->size + BLOCK_ALIGN()));                     \
         }                                                                                               \
-        if(((block_t *)list)->used && !((block_t *)list)->free) {                                       \
-            println(                                                                                    \
-                "%p - %p : %d bytes",                                                                   \
-                (char *)list + sizeof(block_t),                                                         \
-                (char *)list + ((block_t *)list)->size + sizeof(block_t),                               \
-                ((block_t *)list)->size                                                                 \
-                );                                                                                      \
-        }                                                                                               \
-        list = (char *)list + ALIGN((((block_t *)list)->size + ALIGN(sizeof(block_t))));                \
     }                                                                                                   \
 }
 
@@ -170,20 +175,21 @@ typedef enum {
     E_LARGE
 }   E_TYPES;
 
-/* Block header size = 16 */
-typedef struct {
-   uint8_t                      :3;     /* Paddings bits */
-   uint8_t  type                :2;     /* Type of block */
-   uint8_t  used                :1;     /* Whether the block is used */
-   uint8_t  free                :1;     /* Whether the block is being freed after used */
-   uint8_t  last                :1;     /* Whether the block is the last one */
-   uint16_t size                  ;     /* Block size */
-   void     *prev;                ;     /* Prev block */
+/* Block header size = 21 bytes */
+typedef struct block_s {
+    uint8_t                             :2;     /* Paddings bits */
+    uint8_t         type                :2;     /* Type of block */
+    uint8_t         used                :1;     /* Whether the block is used */
+    uint8_t         free                :1;     /* Whether the block is being freed after used */
+    uint8_t         first               :1;     /* Whether the block is the first one */
+    uint8_t         last                :1;     /* Whether the block is the last one */
+    uint32_t        size                  ;     /* Block size */
+    struct block_s  *prev                 ;     /* Mark the next block */
+    struct block_s  *next                 ;     /* Mark the previous block */
 } block_t;
 
-/* Chunk header size = 48 */
+/* Chunk header size = 64 */
 typedef struct header_s {
-    size_t      padding           ;
     uint8_t                     :5;
     uint8_t     block_type      :2;
     uint8_t     full            :1;

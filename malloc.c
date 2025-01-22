@@ -62,7 +62,6 @@ void println(const char *fmt, ...)
 
 static inline void init(size_t size)
 {
-    DEBUG("init\n");
     switch (size)
     {
     case TINY: INIT(TINY, g_chunks.small); break;
@@ -73,9 +72,11 @@ static inline void init(size_t size)
 
 void *malloc(size_t size)
 {
-    if (size <= (TINY - ALIGN(sizeof(block_t)))) {
+    /* Round request up to a multiple of 64 that is at least 64 */
+    size = ALIGN(size);
+    if (size <= (TINY - BLOCK_ALIGN())) {
         _MALLOC(size, E_TINY, g_chunks.small);
-    } else if (size <= (SMALL - ALIGN(sizeof(block_t)))) {
+    } else if (size <= (SMALL - BLOCK_ALIGN())) {
         _MALLOC(size, E_SMALL, g_chunks.medium);
     } else {
         _MALLOC(size, E_LARGE, g_chunks.large);
@@ -88,16 +89,23 @@ void *realloc(void *ptr, size_t size)
         return nullptr;
     }
 
-    pthread_mutex_lock(&g_mutex);
-    block_t *cast = (block_t *)((char *)ptr - ALIGN(sizeof(block_t)));
-    void *new = malloc(size);
-    for (long unsigned int i = 0; i < cast->size + ALIGN(sizeof(block_t)); i++) {
-        *(char *)(new + i) = *(char *)(ptr + i);
+    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
+    if (size <= cast->size) { return ptr; }
+    else if (!cast->next && cast->type != 2) {
+        header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
+        head->offset += size - cast->size;
+        cast->size = size;
+    } else {
+        void *new = malloc(size);
+        // for (long unsigned int i = 0; i < cast->size + BLOCK_ALIGN(); i++) {
+        //     *(char *)(new + i) = *(char *)(ptr + i);
+        // }
+        memcpy(new - BLOCK_ALIGN(), cast, cast->size + BLOCK_ALIGN());
+        free(ptr);
+        return new;
     }
-    free(ptr);
-    ((block_t *)new)->size = size;
-    pthread_mutex_unlock(&g_mutex);
-    return ((void *)((char *)new + ALIGN(sizeof(block_t))));
+    // ((block_t *)new)->size = size;
+    return ptr;
 }
 
 void free(void *ptr)
@@ -105,31 +113,26 @@ void free(void *ptr)
     if (!ptr) { return ;}
 
     pthread_mutex_lock(&g_mutex);
-    ptr = (char *)ptr - ALIGN(sizeof(block_t));
+    ptr = (char *)ptr - BLOCK_ALIGN();
     block_t *cast = ptr;
-    block_t *start = cast;
-    header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
+    header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
     cast->free = 1;
     size_t size = 0;
-    while (cast->prev) {
-        cast = cast->prev;
-    }
-    header_t *header = (header_t *)((char *)cast - ALIGN(sizeof(header_t)));
-    if ((char *)head + ALIGN(head->offset) == (char *)ptr + ALIGN(start->size + sizeof(block_t))) {
-        head->offset = head->offset - start->size - ALIGN(sizeof(sizeof(block_t)));
-        memset(start, 0, ALIGN(sizeof(block_t)) + ALIGN(sizeof(cast->size)));
-        head->free_blocks--;
+    if (!cast->next && cast->type != 2) {
+        head->offset = head->offset - ALIGN(cast->size) - BLOCK_ALIGN();
+        memset(cast, 0, (BLOCK_ALIGN() + ALIGN(cast->size)));
+        head->max_blocks--;
     } else {
         head->free_blocks++;
     }
     
-    if (header->full && header->free_blocks == header->max_blocks) {
-        size = header->chunk_cap;
+    if (head->full && head->free_blocks == head->max_blocks) {
+        size = head->chunk_cap;
         switch (cast->type)
         {
-        case E_TINY: DEALLOC(header, size, g_chunks.small); break;
-        case E_SMALL: DEALLOC(header, size, g_chunks.medium); break;
-        default: DEALLOC(header, size, g_chunks.large); break;
+        case E_TINY: DEALLOC(head, size, g_chunks.small); break;
+        case E_SMALL: DEALLOC(head, size, g_chunks.medium); break;
+        default: DEALLOC(head, size, g_chunks.large); break;
         }
     }
     pthread_mutex_unlock(&g_mutex);
