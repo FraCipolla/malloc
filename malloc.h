@@ -23,7 +23,7 @@ extern pthread_mutex_t	g_mutex;
 #define MALLOC_PAGE_SIZE	sysconf(_SC_PAGESIZE)
 
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
-#define ALIGNMENT (2 * sizeof(size_t))
+#define ALIGNMENT (sizeof(size_t))
 #define ALIGN(size) (((size) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 #define HEADER_ALIGN() (((sizeof(header_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 #define BLOCK_ALIGN() (((sizeof(block_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
@@ -31,64 +31,77 @@ extern pthread_mutex_t	g_mutex;
 #define TINY 1024
 #define SMALL 4096
 #define LARGE INT64_MAX
+#define TYPE(size) (size )
 
 #define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
 
-#define INIT(size, ptr)                                                                                 \
-{                                                                                                       \
-    const size_t page =  sysconf(_SC_PAGESIZE);                                                         \
-    const size_t alloc_size =                                                                           \
-            (size == TINY || size == SMALL) ?                                                           \
-            ((100 / (page / size)) + 1) * page :                                                        \
-            ((size + HEADER_ALIGN() + BLOCK_ALIGN()) / page + 1) * page;                                \
-    void *map = mmap(NULL, alloc_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);     \
-    if (map == MAP_FAILED) { exit(42); }                                                                \
-    if (ptr && ((header_t *)ptr)->full) {                                                               \
-        ((header_t *)map)->prev = ptr;                                                                  \
-        ((header_t *)ptr)->next = map;                                                                  \
-    } else {                                                                                            \
-        ((header_t *)map)->prev = nullptr;                                                              \
-        ((header_t *)map)->next = nullptr;                                                              \
-    }                                                                                                   \
-    ptr = map;                                                                                          \
-    header_t *header = ptr;                                                                             \
-    header->max_blocks = 0;                                                                             \
-    header->free_blocks = 0;                                                                            \
-    header->offset = HEADER_ALIGN();                                                                    \
-    header->block_type = size == TINY ? 0 : size == SMALL ? 1 : 2;                                      \
-    header->full = (size == TINY || size == SMALL) ? false : true;                                      \
-    header->free = 0;                                                                                   \
-    header->chunk_cap = alloc_size;                                                                     \
+#define INIT(t, size, ptr)                                                      \
+{                                                                               \
+    const size_t page =  sysconf(_SC_PAGESIZE);                                 \
+    const size_t alloc_size =                                                   \
+            t == E_TINY ? ((100 / (page / TINY)) + 2) * page :                  \
+            t == E_SMALL ? ((100 / (page / SMALL)) + 2) * page :                \
+            ((size + HEADER_ALIGN() + BLOCK_ALIGN()) / page + 1) * page;        \
+    void *map = mmap(                                                           \
+        NULL,                                                                   \
+        alloc_size,                                                             \
+        PROT_READ | PROT_WRITE,                                                 \
+        MAP_PRIVATE | MAP_ANONYMOUS,                                            \
+        -1,                                                                     \
+        0                                                                       \
+    );                                                                          \
+    if (map == MAP_FAILED) { return nullptr; }                                  \
+    if (ptr && ((header_t *)ptr)->full) {                                       \
+        ((header_t *)map)->prev = ptr;                                          \
+        ((header_t *)ptr)->next = map;                                          \
+    } else {                                                                    \
+        ((header_t *)map)->prev = nullptr;                                      \
+        ((header_t *)map)->next = nullptr;                                      \
+    }                                                                           \
+    ptr = map;                                                                  \
+    header_t *header = ptr;                                                     \
+    header->max_blocks = 0;                                                     \
+    header->free_blocks = 0;                                                    \
+    header->offset = HEADER_ALIGN();                                            \
+    header->type = t == E_TINY ? 0 : t == E_SMALL ? 1 : 2;                      \
+    header->full = t == E_LARGE ? true : false;                                 \
+    header->free = 0;                                                           \
+    header->chunk_cap = alloc_size;                                             \
+    return ptr;                                                                 \
 }                     
 
-#define _MALLOC(size, t, ptr)                                                                           \
-    pthread_mutex_lock(&g_mutex);                                                                       \
-    if (!ptr || ((header_t *)ptr)->full) {                                                              \
-        init((t == 0 ? TINY : t == 1 ? SMALL : size));                                                  \
-    }                                                                                                   \
-    header_t *header = ptr;                                                                             \
-    if (header->offset == HEADER_ALIGN()) {                                                             \
-        ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = nullptr;                             \
-        ((block_t *)((char *)ptr + ALIGN(header->offset)))->first = 1;                                  \
-    }                                                                                                   \
-    block_t *block = (block_t *)((char *)ptr + ALIGN(header->offset));                                  \
-    header->max_blocks++;                                                                               \
-    block->size = size;                                                                                 \
-    block->used = 1;                                                                                    \
-    block->type = t;                                                                                    \
-    block->free = 0;                                                                                    \
-    block->last = 1;                                                                                    \
-    block->next = nullptr;                                                                              \
-    header->offset += size + BLOCK_ALIGN();                                                             \
-    if (block->prev) {                                                                                  \
-        (block->prev)->next = block;                                                                    \
-    }                                                                                                   \
-    ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = block;                                   \
-    if ((header->offset + BLOCK_ALIGN() + (t == 0 ? TINY : t == 1 ? SMALL : 0)                          \
-        > header->chunk_cap && t != 2)) {                                                               \
-        header->full = 1;                                                                               \
-    }                                                                                                   \
-    pthread_mutex_unlock(&g_mutex);                                                                     \
+#define _MALLOC(size, t, ptr)                                                   \
+    pthread_mutex_lock(&g_mutex);                                               \
+    if (!ptr || ((header_t *)ptr)->full) {                                      \
+        void *p = init(size, t);                                                \
+        if (!p) { return nullptr; }                                             \
+    }                                                                           \
+    header_t *header = ptr;                                                     \
+    if (header->offset == HEADER_ALIGN() && header->type != 2) {                \
+        ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = nullptr;     \
+        ((block_t *)((char *)ptr + ALIGN(header->offset)))->first = 1;          \
+    }                                                                           \
+    block_t *block = (block_t *)((char *)ptr + ALIGN(header->offset));          \
+    header->max_blocks++;                                                       \
+    block->size = size;                                                         \
+    block->used = 1;                                                            \
+    block->type = t;                                                            \
+    block->free = 0;                                                            \
+    block->last = 1;                                                            \
+    block->next = nullptr;                                                      \
+    header->offset += header->type != 2 ? size + BLOCK_ALIGN() : 0;             \
+    if (block->prev) {                                                          \
+        (block->prev)->last = 0;                                                \
+        (block->prev)->next = block;                                            \
+    }                                                                           \
+    if (header->type != 2) {                                                    \
+        ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = block;       \
+    }                                                                           \
+    if ((header->offset + BLOCK_ALIGN() + (t == 0 ? TINY : t == 1 ? SMALL : 0)  \
+        > header->chunk_cap && t != 2)) {                                       \
+        header->full = 1;                                                       \
+    }                                                                           \
+    pthread_mutex_unlock(&g_mutex);                                             \
     return ((void *)((char *)block + BLOCK_ALIGN()))                         
 
 #define DEALLOC(header, size, ptr)                                                                      \
@@ -107,7 +120,7 @@ extern pthread_mutex_t	g_mutex;
 #define SHOW_ALLOC_MEMORY(small, medium, large)                                                         \
     _SHOW_ALLOC_MEMORY(small, TINY);                                                                    \
     _SHOW_ALLOC_MEMORY(medium, SMALL);                                                                  \
-    // _SHOW_ALLOC_MEMORY_LARGE(large)
+    _SHOW_ALLOC_MEMORY_LARGE(large)
 
 #define _SHOW_ALLOC_MEMORY(ptr, t) {                                                                    \
     if (ptr) {                                                                                          \
@@ -156,15 +169,14 @@ extern pthread_mutex_t	g_mutex;
     while (((header_t *)list)->prev) {                                                                  \
         list = ((header_t *)list)->prev;                                                                \
     }                                                                                                   \
-    println("LARGE : %p\n", list);                                                                      \
     while (list) {                                                                                      \
+        println("LARGE : %p", list);                                                                      \
         println(                                                                                        \
-            "%p - %p : %ld bytes\n",                                                                    \
-            (char *)list + sizeof(header_t),                                                            \
-            (char *)list + (((header_t *)list)->block_size),                                            \
-            ((header_t *)list)->block_size                                                              \
+            "%p - %p : %d bytes",                                                                    \
+            (char *)list + HEADER_ALIGN(),                                                            \
+            (char *)list + ((block_t *)((char *)list + HEADER_ALIGN()))->size,                                            \
+            ((block_t *)((char *)list + HEADER_ALIGN()))->size                                                              \
             );                                                                                          \
-           println("LARGE : %p\n", list);                                                               \
         list = ((header_t *)list)->next;                                                                \
     }                                                                                                   \
 }
@@ -191,7 +203,7 @@ typedef struct block_s {
 /* Chunk header size = 64 */
 typedef struct header_s {
     uint8_t                     :5;
-    uint8_t     block_type      :2;
+    uint8_t     type            :2;
     uint8_t     full            :1;
     uint8_t     free            :1;
     uint8_t     free_blocks       ;
@@ -213,7 +225,7 @@ extern chunks g_chunks;
 void free(void *ptr);
 void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
-void show_alloc_memory();
+void show_alloc_mem();
 // void show_alloc_mem_ex();
 
 void println(const char *fmt, ...);

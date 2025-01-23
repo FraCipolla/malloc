@@ -21,7 +21,7 @@ $(NAME) : $(HOSTLIB)
 	ln -fs ${HOSTLIB} ${NAME}
 	mv libft_malloc*.so tests/
 
-${HOSTLIB}: ${OBJ}
+${HOSTLIB}: ${OBJ} ${INCLUDES}
 	@echo compiling libft_malloc.so
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(HOSTLIB)
 

@@ -60,14 +60,15 @@ void println(const char *fmt, ...)
     write(1, "\n", 1);
 }
 
-static inline void init(size_t size)
+static inline void* init(size_t size, E_TYPES type)
 {
-    switch (size)
+    switch (type)
     {
-    case TINY: INIT(TINY, g_chunks.small); break;
-    case SMALL: INIT(SMALL, g_chunks.medium); break;
-    default: INIT(size, g_chunks.large); break;
+    case E_TINY: INIT(E_TINY, TINY, g_chunks.small);
+    case E_SMALL: INIT(E_SMALL, SMALL, g_chunks.medium);
+    default: INIT(E_LARGE, size, g_chunks.large);
     }
+    return nullptr;
 }
 
 void *malloc(size_t size)
@@ -85,6 +86,7 @@ void *malloc(size_t size)
 
 void *realloc(void *ptr, size_t size)
 {
+    pthread_mutex_lock(&g_mutex);
     if (!ptr) {
         return nullptr;
     }
@@ -96,23 +98,25 @@ void *realloc(void *ptr, size_t size)
         head->offset += size - cast->size;
         cast->size = size;
     } else {
+        pthread_mutex_unlock(&g_mutex);
         void *new = malloc(size);
+        pthread_mutex_lock(&g_mutex);
         // for (long unsigned int i = 0; i < cast->size + BLOCK_ALIGN(); i++) {
         //     *(char *)(new + i) = *(char *)(ptr + i);
         // }
         memcpy(new - BLOCK_ALIGN(), cast, cast->size + BLOCK_ALIGN());
+        pthread_mutex_unlock(&g_mutex);
         free(ptr);
         return new;
     }
-    // ((block_t *)new)->size = size;
     return ptr;
 }
 
 void free(void *ptr)
 {
+    pthread_mutex_lock(&g_mutex);
     if (!ptr) { return ;}
 
-    pthread_mutex_lock(&g_mutex);
     ptr = (char *)ptr - BLOCK_ALIGN();
     block_t *cast = ptr;
     header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
@@ -122,10 +126,14 @@ void free(void *ptr)
         head->offset = head->offset - ALIGN(cast->size) - BLOCK_ALIGN();
         memset(cast, 0, (BLOCK_ALIGN() + ALIGN(cast->size)));
         head->max_blocks--;
+    } else if ((cast->prev)->used && (cast->prev)->free) {
+        head->max_blocks--;
+        (cast->prev)->size += cast->size + BLOCK_ALIGN();
+        (cast->prev)->next = cast->next;
     } else {
         head->free_blocks++;
     }
-    
+
     if (head->full && head->free_blocks == head->max_blocks) {
         size = head->chunk_cap;
         switch (cast->type)
@@ -138,7 +146,7 @@ void free(void *ptr)
     pthread_mutex_unlock(&g_mutex);
 }
 
-void show_alloc_memory()
+void show_alloc_mem()
 {
     pthread_mutex_lock(&g_mutex);
     SHOW_ALLOC_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);

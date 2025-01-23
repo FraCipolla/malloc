@@ -3,29 +3,27 @@
 #include <unistd.h>
 #include "malloc.h"
 
-void    prints(char *s)
-{
-    write(1, s, strlen(s));
-}
+#define M (1024 * 1024)
 
-int     main(void)
+int main()
 {
-    int   i;
-    char  *addr;
-
-    i = 0;
-    while (i < 1024) 
-    {
-        addr = (char*)malloc(1024);
-        if (addr == NULL)
-        {
-            prints("Failed to allocate memory\n");
-            return (1);
-        }
-        addr[0] = 42;
-        free(addr); 
-        i++; 
-    }
-    show_alloc_memory();
-    return (0);
+    void* a = malloc(1);
+    void* b = malloc(2);
+    void* c = malloc(4);
+    void* d = malloc(8);
+    void* e = malloc(16);
+    void* f = malloc(32);
+    void* g = malloc(64);
+    void* h = malloc(128);
+    void* i = malloc(256);
+    void* j = malloc(512);
+    void* k = malloc(1024);
+    void* l = malloc(1024 * 2);
+    void* m = malloc(1024 * 4); 
+    void* n = malloc(1024 * 32);
+    void* o = malloc(M);
+    void* p = malloc(16*M);
+    void* q = malloc(128*M);
+    show_alloc_mem(); 
+    return (0); 
 }
