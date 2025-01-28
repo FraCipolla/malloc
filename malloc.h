@@ -28,7 +28,7 @@ extern pthread_mutex_t	g_mutex;
 #define HEADER_ALIGN() (((sizeof(header_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 #define BLOCK_ALIGN() (((sizeof(block_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 
-#define TINY 1024
+#define TINY 512
 #define SMALL 4096
 #define LARGE INT64_MAX
 #define TYPE(size) (size )
@@ -69,7 +69,7 @@ extern pthread_mutex_t	g_mutex;
     header->chunk_cap = alloc_size;                                             \
     return ptr;                                                                 \
 }                     
-
+int i = 0;
 #define _MALLOC(size, t, ptr)                                                   \
     pthread_mutex_lock(&g_mutex);                                               \
     if (!ptr || ((header_t *)ptr)->full) {                                      \
@@ -77,27 +77,15 @@ extern pthread_mutex_t	g_mutex;
         if (!p) { return nullptr; }                                             \
     }                                                                           \
     header_t *header = ptr;                                                     \
-    if (header->offset == HEADER_ALIGN() && header->type != 2) {                \
-        ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = nullptr;     \
-        ((block_t *)((char *)ptr + ALIGN(header->offset)))->first = 1;          \
-    }                                                                           \
-    block_t *block = (block_t *)((char *)ptr + ALIGN(header->offset));          \
+    block_t *block = (block_t *)((char *)ptr + header->offset);                 \
     header->max_blocks++;                                                       \
     block->size = size;                                                         \
     block->used = 1;                                                            \
     block->type = t;                                                            \
     block->free = 0;                                                            \
     block->last = 1;                                                            \
-    block->next = nullptr;                                                      \
     header->offset += header->type != 2 ? size + BLOCK_ALIGN() : 0;             \
-    if (block->prev) {                                                          \
-        (block->prev)->last = 0;                                                \
-        (block->prev)->next = block;                                            \
-    }                                                                           \
-    if (header->type != 2) {                                                    \
-        ((block_t *)((char *)ptr + ALIGN(header->offset)))->prev = block;       \
-    }                                                                           \
-    if ((header->offset + BLOCK_ALIGN() + (t == 0 ? TINY : t == 1 ? SMALL : 0)  \
+    if ((header->offset + BLOCK_ALIGN() + (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)  \
         > header->chunk_cap && t != 2)) {                                       \
         header->full = 1;                                                       \
     }                                                                           \
@@ -189,15 +177,13 @@ typedef enum {
 
 /* Block header size = 21 bytes */
 typedef struct block_s {
-    uint8_t                             :2;     /* Paddings bits */
-    uint8_t         type                :2;     /* Type of block */
-    uint8_t         used                :1;     /* Whether the block is used */
-    uint8_t         free                :1;     /* Whether the block is being freed after used */
-    uint8_t         first               :1;     /* Whether the block is the first one */
-    uint8_t         last                :1;     /* Whether the block is the last one */
-    uint32_t        size                  ;     /* Block size */
-    struct block_s  *prev                 ;     /* Mark the next block */
-    struct block_s  *next                 ;     /* Mark the previous block */
+    uint8_t                             :2 ;
+    uint8_t         type                :2 ;     /* Type of block */
+    uint8_t         used                :1 ;     /* Whether the block is used */
+    uint8_t         free                :1 ;     /* Whether the block is being freed after used */
+    uint8_t         first               :1 ;     /* Whether the block is the first one */
+    uint8_t         last                :1 ;     /* Whether the block is the last one */
+    uint32_t        size                   ;     /* Block size */
 } block_t;
 
 /* Chunk header size = 64 */
