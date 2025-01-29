@@ -73,13 +73,6 @@ static inline void* init(size_t size, E_TYPES type)
 
 void *malloc(size_t size)
 {
-    /* Round request up to a multiple of 64 that is at least 64 */
-
-    println("uint8 size %d", sizeof(uint8_t));
-    println("size_t size %d", sizeof(size_t));
-    println("block size %d", sizeof(block_t));
-    println("block align %d", BLOCK_ALIGN());
-    size = ALIGN(size);
     if (size <= (TINY - BLOCK_ALIGN())) {
         _MALLOC(size, E_TINY, g_chunks.small);
     } else if (size <= (SMALL - BLOCK_ALIGN())) {
@@ -127,17 +120,17 @@ void free(void *ptr)
     header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
     cast->free = 1;
     size_t size = 0;
-    // if (!cast->next && cast->type != 2) {
-    //     head->offset = head->offset - ALIGN(cast->size) - BLOCK_ALIGN();
-    //     memset(cast, 0, (BLOCK_ALIGN() + ALIGN(cast->size)));
-    //     head->max_blocks--;
-    // } else if ((cast->prev)->used && (cast->prev)->free) {
-    //     head->max_blocks--;
-    //     (cast->prev)->size += cast->size + BLOCK_ALIGN();
-    //     (cast->prev)->next = cast->next;
-    // } else {
-    //     head->free_blocks++;
-    // }
+    if (!cast->next && cast->type != 2) {
+        head->offset = head->offset - ALIGN(cast->size) - BLOCK_ALIGN();
+        cast->used = 0;
+        head->max_blocks--;
+    } else if ((cast->prev)->used && (cast->prev)->free) {
+        head->max_blocks--;
+        (cast->prev)->size += cast->size + BLOCK_ALIGN();
+        (cast->prev)->next = cast->next;
+    } else {
+        head->free_blocks++;
+    }
 
     if (head->full && head->free_blocks == head->max_blocks) {
         size = head->chunk_cap;
