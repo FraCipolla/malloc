@@ -23,8 +23,7 @@ int main()
     void* n = malloc(1024 * 32);
     void* o = malloc(M);
     void* p = malloc(16*M);
-    void* q = malloc(128*M);
+    void* q = malloc(64*M);
     show_alloc_mem(); 
-    hex_dump();
     return (0); 
 }

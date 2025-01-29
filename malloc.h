@@ -81,20 +81,22 @@ extern pthread_mutex_t	g_mutex;
     block_t *block = (block_t *)((char *)ptr + HEADER_ALIGN());                 \
     block_t *prev = block->used ? block : nullptr;                              \
     while (block->next && block->next->used                                     \
-            && (block->cap - block->size) < (size + BLOCK_ALIGN())) {           \
+            && block->extra_size < (size + BLOCK_ALIGN())) {                    \
         block = block->next;                                                    \
         prev = block;                                                           \
     }                                                                           \
-    if ((block->cap - block->size) >= (size + BLOCK_ALIGN())) {                 \
+    if (block->extra_size >= (size + BLOCK_ALIGN())) {                          \
         block_t *next = block->next;                                            \
         prev = block;                                                           \
-        block->cap = block->size;                                               \
+        block->extra_size = 0;                                                  \
         block =                                                                 \
             (block_t *)((char *)block + (block->size + BLOCK_ALIGN()));         \
         block->next = next;                                                     \
-        block->cap = block->prev->cap - block->prev->size;                      \
+        block->extra_size = block->prev->extra_size - block->prev->size;        \
     } else if (block->used) {                                                   \
-        block = (block_t *)((char *)block + block->cap + BLOCK_ALIGN());        \
+        block =                                                                 \
+            (block_t *)                                                         \
+            ((char *)block + block->size + block->extra_size + BLOCK_ALIGN());  \
         prev->next = block;                                                     \
     }                                                                           \
     if (prev) {                                                                 \
@@ -103,13 +105,13 @@ extern pthread_mutex_t	g_mutex;
     }                                                                           \
     block->size = size;                                                         \
     /* Round request up to a multiple of 64 that is at least 64 */              \
-    if (!block->cap) block->cap = ALIGN(size);                                  \
+    if (!block->extra_size) block->extra_size = ALIGN(size) - size;             \
     block->used = 1;                                                            \
     block->type = t;                                                            \
     block->free = 0;                                                            \
     block->last = 1;                                                            \
     block->next = nullptr;                                                      \
-    header->offset += header->type != 2 ? block->cap + BLOCK_ALIGN() : 0;       \
+    header->offset += header->type != 2 ? ALIGN(size) + BLOCK_ALIGN() : 0;      \
     if ((header->offset + BLOCK_ALIGN() +                                       \
                 (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
         > header->chunk_cap && t != 2)) {                                       \
@@ -134,7 +136,7 @@ extern pthread_mutex_t	g_mutex;
 #define SHOW_ALLOC_MEMORY(small, medium, large)                                 \
     _SHOW_ALLOC_MEMORY(small, TINY);                                            \
     _SHOW_ALLOC_MEMORY(medium, SMALL);                                          \
-    _SHOW_ALLOC_MEMORY_LARGE(large)
+    _SHOW_ALLOC_MEMORY(large, LARGE)
 
 #define _SHOW_ALLOC_MEMORY(ptr, t) {                                            \
     if (ptr) {                                                                  \
@@ -149,8 +151,8 @@ extern pthread_mutex_t	g_mutex;
                 if (block->used && !block->free) {                              \
                     println(                                                    \
                         "%p - %p : %d bytes",                                   \
-                        (char *)list + sizeof(block_t),                         \
-                        (char *)list + block->size + sizeof(block_t),           \
+                        (char *)list + BLOCK_ALIGN(),                           \
+                        (char *)list + block->size + BLOCK_ALIGN(),             \
                         block->size                                             \
                         );                                                      \
                 }                                                               \
@@ -179,31 +181,6 @@ extern pthread_mutex_t	g_mutex;
     }                                                                           \
 }
 
-#define HEX_DUMB(ptr)                                                           \
-    if (ptr) {                                                                  \
-        void *list = ptr;                                                       \
-        while (((header_t *)list)->prev) {                                      \
-            list = ((header_t *)list)->prev;                                    \
-        }                                                                       \
-        while (list) {                                                          \
-            println("%p\n",list);                                               \
-            block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
-            while (block) {                                                     \
-                size_t size = block->size;                                              \
-                unsigned char *byte_ptr = (unsigned char *)block + BLOCK_ALIGN();                         \
-                for (size_t i = 0; i < size; i++) {                                     \
-                    println("%02x ", byte_ptr[i]);                                      \
-                    if ((i + 1) % 16 == 0) {                                            \
-                        println("");                                                    \
-                    }                                                                   \
-                }                                                                       \
-                println("");                                                            \
-                block = block->next;                                            \
-            }                                                                   \
-            list = ((header_t *)list)->next;                                        \
-        }                                                                       \
-    }
-
 typedef enum {
     E_TINY,
     E_SMALL,
@@ -217,8 +194,8 @@ typedef struct block_s {
     uint32_t            free                :1 ;   /* Whether the block is being freed after used */
     uint32_t            first               :1 ;   /* Whether the block is the first one */
     uint32_t            last                :1 ;   /* Whether the block is the last one */
-    uint32_t            size                :26;   /* Block size */
-    uint64_t            cap                 :32;   /* Total block capacity. Needed for defragmentation */
+    uint32_t            size                :32;   /* Block size */
+    uint64_t            extra_size          :26;   /* Total block capacity. Needed for defragmentation */
     struct block_s*     next                   ;   /* Mark the prev block*/
     struct block_s*     prev                   ;   /* Mark the prev block*/
 } block_t;
@@ -250,7 +227,7 @@ void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void show_alloc_mem();
 void hex_dump();
-// void show_alloc_mem_ex();
+void show_alloc_mem_ex();
 
 void println(const char *fmt, ...);
 

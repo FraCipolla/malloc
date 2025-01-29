@@ -24,10 +24,7 @@ void println(const char *fmt, ...)
                 break;
             case 'd':              /* int */
                 int d = va_arg(ap, int);
-                if (d < 0) {
-                    write(1, "-", 1);
-                    d *= -1;
-                }
+                if (d < 0) { write(1, "-", 1); d *= -1; }
                 i = 0;
                 while (d > 0) {
                     buff[i++] = (d % 10) + 48;
@@ -49,6 +46,22 @@ void println(const char *fmt, ...)
                     i++;
                 }
                 while (i-- > 0) { write(1, &buff[i], 1); }
+                break;
+            case 'x':
+                unsigned int x = va_arg(ap, long unsigned int);
+                i = 0;
+                while (x > 0) {
+                    buff[i] = str[x % 16];
+                    write(1, &buff[i], 1);
+                    p /= 16;
+                    i++;
+                }
+                switch (i)
+                {
+                case 0: write(1, "00", 1); break;
+                case 1: write(1, "0", 1); write(1, &buff[0], 1); break;
+                default: write(1, &buff[0], 2); break;
+                }
                 break;
             }
         } else {
@@ -97,15 +110,15 @@ void *realloc(void *ptr, size_t size)
         header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
         head->offset += size - cast->size;
         cast->size = size;
-        cast->cap = ALIGN(size);
+        cast->extra_size = ALIGN(size);
     } else {
         pthread_mutex_unlock(&g_mutex);
         void *new = malloc(size);
         pthread_mutex_lock(&g_mutex);
-        // for (long unsigned int i = 0; i < cast->size + BLOCK_ALIGN(); i++) {
-        //     *(char *)(new + i) = *(char *)(ptr + i);
-        // }
-        memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
+        for (long unsigned int i = 0; i < cast->size; i++) {
+            *(char *)(new + i) = *(char *)(ptr + i + BLOCK_ALIGN());
+        }
+        // memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
         pthread_mutex_unlock(&g_mutex);
         // fix free between blocks
         free(ptr);
@@ -127,15 +140,15 @@ void free(void *ptr)
     cast->free = 1;
     size_t size = 0;
     if (cast->type != 2 && !cast->next) {
-        head->offset = head->offset - (cast->cap + BLOCK_ALIGN());
+        head->offset = head->offset - (cast->size + cast->extra_size + BLOCK_ALIGN());
         cast->used = 0;
-        cast->cap = 0;
+        cast->extra_size = 0;
         cast->size = 0;
         cast->free = 1;
         head->max_blocks--;
     } else if (cast->type != 2 && (cast->prev)->used && (cast->prev)->free) {
         head->max_blocks--;
-        (cast->prev)->cap += cast->cap + BLOCK_ALIGN();
+        (cast->prev)->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
         (cast->prev)->next = cast->next;
     } else {
         head->free_blocks++;
@@ -160,9 +173,9 @@ void show_alloc_mem()
     pthread_mutex_unlock(&g_mutex);
 }
 
-void hex_dump()
-{
-    HEX_DUMB(g_chunks.small);
-    HEX_DUMB(g_chunks.medium);
-    HEX_DUMB(g_chunks.large);
-}
+// void show_alloc_mem_ex()
+// {
+//     pthread_mutex_lock(&g_mutex);
+//     SHOW_ALLOC_MEMORY_EX(g_chunks.small, g_chunks.medium, g_chunks.large);
+//     pthread_mutex_unlock(&g_mutex);
+// }
