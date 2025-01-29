@@ -25,5 +25,6 @@ int main()
     void* p = malloc(16*M);
     void* q = malloc(128*M);
     show_alloc_mem(); 
+    hex_dump();
     return (0); 
 }

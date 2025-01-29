@@ -179,6 +179,31 @@ extern pthread_mutex_t	g_mutex;
     }                                                                           \
 }
 
+#define HEX_DUMB(ptr)                                                           \
+    if (ptr) {                                                                  \
+        void *list = ptr;                                                       \
+        while (((header_t *)list)->prev) {                                      \
+            list = ((header_t *)list)->prev;                                    \
+        }                                                                       \
+        while (list) {                                                          \
+            println("%p\n",list);                                               \
+            block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
+            while (block) {                                                     \
+                size_t size = block->size;                                              \
+                unsigned char *byte_ptr = (unsigned char *)block + BLOCK_ALIGN();                         \
+                for (size_t i = 0; i < size; i++) {                                     \
+                    println("%02x ", byte_ptr[i]);                                      \
+                    if ((i + 1) % 16 == 0) {                                            \
+                        println("");                                                    \
+                    }                                                                   \
+                }                                                                       \
+                println("");                                                            \
+                block = block->next;                                            \
+            }                                                                   \
+            list = ((header_t *)list)->next;                                        \
+        }                                                                       \
+    }
+
 typedef enum {
     E_TINY,
     E_SMALL,
@@ -224,6 +249,7 @@ void free(void *ptr);
 void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void show_alloc_mem();
+void hex_dump();
 // void show_alloc_mem_ex();
 
 void println(const char *fmt, ...);

@@ -90,7 +90,9 @@ void *realloc(void *ptr, size_t size)
     }
 
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
-    if (size <= cast->size) { return ptr; }
+    if (size <= cast->size) { 
+        return ptr;
+    }
     else if (!cast->next && cast->type != 2) {
         header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
         head->offset += size - cast->size;
@@ -106,7 +108,7 @@ void *realloc(void *ptr, size_t size)
         memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
         pthread_mutex_unlock(&g_mutex);
         // fix free between blocks
-        // free(ptr);
+        free(ptr);
         return new;
     }
     return ptr;
@@ -119,17 +121,19 @@ void free(void *ptr)
 
     ptr = (char *)ptr - BLOCK_ALIGN();
     block_t *cast = ptr;
-    header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
+    header_t *head = \
+        cast->type == 0 ? g_chunks.small :  \
+            cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
     cast->free = 1;
     size_t size = 0;
-    if (!cast->next && cast->type != 2) {
+    if (cast->type != 2 && !cast->next) {
         head->offset = head->offset - (cast->cap + BLOCK_ALIGN());
         cast->used = 0;
         cast->cap = 0;
         cast->size = 0;
         cast->free = 1;
         head->max_blocks--;
-    } else if ((cast->prev)->used && (cast->prev)->free) {
+    } else if (cast->type != 2 && (cast->prev)->used && (cast->prev)->free) {
         head->max_blocks--;
         (cast->prev)->cap += cast->cap + BLOCK_ALIGN();
         (cast->prev)->next = cast->next;
@@ -156,16 +160,9 @@ void show_alloc_mem()
     pthread_mutex_unlock(&g_mutex);
 }
 
-void hex_dump(void *ptr, size_t size) {
-    unsigned char *byte_ptr = (unsigned char *)ptr;
-    for (size_t i = 0; i < size; i++) {
-        // Print each byte as two hexadecimal characters
-        println("%02x ", byte_ptr[i]);
-
-        // Print a newline every 16 bytes for better readability
-        if ((i + 1) % 16 == 0) {
-            println("");
-        }
-    }
-    println("");
+void hex_dump()
+{
+    HEX_DUMB(g_chunks.small);
+    HEX_DUMB(g_chunks.medium);
+    HEX_DUMB(g_chunks.large);
 }
