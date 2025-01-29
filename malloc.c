@@ -91,22 +91,24 @@ void *realloc(void *ptr, size_t size)
 
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
     if (size <= cast->size) { return ptr; }
-    // else if (!cast->next && cast->type != 2) {
-    //     header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
-    //     head->offset += size - cast->size;
-    //     cast->size = size;
-    // } else {
-    //     pthread_mutex_unlock(&g_mutex);
-    //     void *new = malloc(size);
-    //     pthread_mutex_lock(&g_mutex);
-    //     // for (long unsigned int i = 0; i < cast->size + BLOCK_ALIGN(); i++) {
-    //     //     *(char *)(new + i) = *(char *)(ptr + i);
-    //     // }
-    //     memcpy(new - BLOCK_ALIGN(), cast, cast->size + BLOCK_ALIGN());
-    //     pthread_mutex_unlock(&g_mutex);
-    //     free(ptr);
-    //     return new;
-    // }
+    else if (!cast->next && cast->type != 2) {
+        header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
+        head->offset += size - cast->size;
+        cast->size = size;
+        cast->cap = ALIGN(size);
+    } else {
+        pthread_mutex_unlock(&g_mutex);
+        void *new = malloc(size);
+        pthread_mutex_lock(&g_mutex);
+        // for (long unsigned int i = 0; i < cast->size + BLOCK_ALIGN(); i++) {
+        //     *(char *)(new + i) = *(char *)(ptr + i);
+        // }
+        memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
+        pthread_mutex_unlock(&g_mutex);
+        // fix free between blocks
+        // free(ptr);
+        return new;
+    }
     return ptr;
 }
 
@@ -121,12 +123,15 @@ void free(void *ptr)
     cast->free = 1;
     size_t size = 0;
     if (!cast->next && cast->type != 2) {
-        head->offset = head->offset - ALIGN(cast->size) - BLOCK_ALIGN();
+        head->offset = head->offset - (cast->cap + BLOCK_ALIGN());
         cast->used = 0;
+        cast->cap = 0;
+        cast->size = 0;
+        cast->free = 1;
         head->max_blocks--;
     } else if ((cast->prev)->used && (cast->prev)->free) {
         head->max_blocks--;
-        (cast->prev)->size += cast->size + BLOCK_ALIGN();
+        (cast->prev)->cap += cast->cap + BLOCK_ALIGN();
         (cast->prev)->next = cast->next;
     } else {
         head->free_blocks++;

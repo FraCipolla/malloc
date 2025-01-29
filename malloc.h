@@ -79,28 +79,37 @@ extern pthread_mutex_t	g_mutex;
     header_t *header = ptr;                                                     \
     header->max_blocks++;                                                       \
     block_t *block = (block_t *)((char *)ptr + HEADER_ALIGN());                 \
-    if (!block) {                                                               \
-        block->prev = nullptr;                                                  \
-    } else {                                                                    \
-        block_t *prev = block;                                                  \
-        while (block->next && block->next->used) {                              \
-            block = block->next;                                                \
-            prev = block;                                                       \
-        }                                                                       \
-        block = (block_t *)((char *)block + block->size + BLOCK_ALIGN());       \
+    block_t *prev = block->used ? block : nullptr;                              \
+    while (block->next && block->next->used                                     \
+            && (block->cap - block->size) < (size + BLOCK_ALIGN())) {           \
+        block = block->next;                                                    \
+        prev = block;                                                           \
+    }                                                                           \
+    if ((block->cap - block->size) >= (size + BLOCK_ALIGN())) {                 \
+        block_t *next = block->next;                                            \
+        prev = block;                                                           \
+        block->cap = block->size;                                               \
+        block =                                                                 \
+            (block_t *)((char *)block + (block->size + BLOCK_ALIGN()));         \
+        block->next = next;                                                     \
+        block->cap = block->prev->cap - block->prev->size;                      \
+    } else if (block->used) {                                                   \
+        block = (block_t *)((char *)block + block->cap + BLOCK_ALIGN());        \
         prev->next = block;                                                     \
+    }                                                                           \
+    if (prev) {                                                                 \
         prev->last = 0;                                                         \
         block->prev = prev;                                                     \
     }                                                                           \
     block->size = size;                                                         \
     /* Round request up to a multiple of 64 that is at least 64 */              \
-    block->cap = ALIGN(size);                                                   \
+    if (!block->cap) block->cap = ALIGN(size);                                  \
     block->used = 1;                                                            \
     block->type = t;                                                            \
     block->free = 0;                                                            \
     block->last = 1;                                                            \
     block->next = nullptr;                                                      \
-    header->offset += header->type != 2 ? size + BLOCK_ALIGN() : 0;             \
+    header->offset += header->type != 2 ? block->cap + BLOCK_ALIGN() : 0;       \
     if ((header->offset + BLOCK_ALIGN() +                                       \
                 (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
         > header->chunk_cap && t != 2)) {                                       \
