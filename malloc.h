@@ -79,26 +79,27 @@ extern pthread_mutex_t	g_mutex;
     header_t *header = ptr;                                                     \
     header->max_blocks++;                                                       \
     block_t *block = (block_t *)((char *)ptr + HEADER_ALIGN());                 \
-    if (!block) { \
-        block->prev = nullptr;                                                         \
-    } else { \
-        block_t *prev = block;                                                    \
-        while (block->next && block->next->used) {                                        \
-            block = block->next;                                                    \
-            prev = block;                                                           \
-        } \
-        block = (block_t *)((char *)block + block->size + BLOCK_ALIGN());                                                                           \
-        prev->next = block; \
-        block->prev = prev; \
-    } \
+    if (!block) {                                                               \
+        block->prev = nullptr;                                                  \
+    } else {                                                                    \
+        block_t *prev = block;                                                  \
+        while (block->next && block->next->used) {                              \
+            block = block->next;                                                \
+            prev = block;                                                       \
+        }                                                                       \
+        block = (block_t *)((char *)block + block->size + BLOCK_ALIGN());       \
+        prev->next = block;                                                     \
+        prev->last = 0;                                                         \
+        block->prev = prev;                                                     \
+    }                                                                           \
     block->size = size;                                                         \
     /* Round request up to a multiple of 64 that is at least 64 */              \
+    block->cap = ALIGN(size);                                                   \
     block->used = 1;                                                            \
     block->type = t;                                                            \
     block->free = 0;                                                            \
     block->last = 1;                                                            \
-    block->cap = ALIGN(size);                                                   \
-    block->next = nullptr;                                                \
+    block->next = nullptr;                                                      \
     header->offset += header->type != 2 ? size + BLOCK_ALIGN() : 0;             \
     if ((header->offset + BLOCK_ALIGN() +                                       \
                 (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
@@ -108,81 +109,65 @@ extern pthread_mutex_t	g_mutex;
     pthread_mutex_unlock(&g_mutex);                                             \
     return ((void *)((char *)block + BLOCK_ALIGN()))                         
 
-#define DEALLOC(header, size, ptr)                                                                      \
-    if (header->prev && header->next) {                                                                 \
-        ((header_t *)(header->prev))->next = header->next;                                              \
-    } else if (header->next) {                                                                          \
-        header = header->next;                                                                          \
-    } else if (header->prev) {                                                                          \
-        ((header_t *)(header->prev))->next = nullptr;                                                   \
-        header = header->prev;                                                                          \
-    } else {                                                                                            \
-        ptr = nullptr;                                                                                  \
-    }                                                                                                   \
+#define DEALLOC(header, size, ptr)                                              \
+    if (header->prev && header->next) {                                         \
+        ((header_t *)(header->prev))->next = header->next;                      \
+    } else if (header->next) {                                                  \
+        header = header->next;                                                  \
+    } else if (header->prev) {                                                  \
+        ((header_t *)(header->prev))->next = nullptr;                           \
+        header = header->prev;                                                  \
+    } else {                                                                    \
+        ptr = nullptr;                                                          \
+    }                                                                           \
     munmap((char *)header, size);
 
-#define SHOW_ALLOC_MEMORY(small, medium, large)                                                         \
-    _SHOW_ALLOC_MEMORY(small, TINY);                                                                    \
-    _SHOW_ALLOC_MEMORY(medium, SMALL);                                                                  \
+#define SHOW_ALLOC_MEMORY(small, medium, large)                                 \
+    _SHOW_ALLOC_MEMORY(small, TINY);                                            \
+    _SHOW_ALLOC_MEMORY(medium, SMALL);                                          \
     _SHOW_ALLOC_MEMORY_LARGE(large)
 
-#define _SHOW_ALLOC_MEMORY(ptr, t) {                                                                    \
-    if (ptr) {                                                                                          \
-        void *list = ptr;                                                                               \
-        while (((header_t *)list)->prev) {                                                              \
-            list = ((header_t *)list)->prev;                                                            \
-        }                                                                                               \
-        println("%s : %p", #t, list);                                                                   \
-        void *first_chunk = list;                                                                       \
-        list = ((char *)list + HEADER_ALIGN());                                                         \
-        while (42) {                                                                                    \
-            if (((block_t *)list)->last) {                                                              \
-                if (((block_t *)list)->used) {                                                          \
-                    println(                                                                            \
-                        "%p - %p : %d bytes",                                                           \
-                        (char *)list + sizeof(block_t),                                                 \
-                        (char *)list + ((block_t *)list)->size + sizeof(block_t),                       \
-                        ((block_t *)list)->size                                                         \
-                        );                                                                              \
-                }                                                                                       \
-                if (((header_t *)(first_chunk))->next) {                                                \
-                    list = ((header_t *)(first_chunk))->next;                                           \
-                    first_chunk = ((header_t *)(first_chunk))->next;                                    \
-                    println("%s : %p",#t, list);                                                        \
-                    list = ((char *)list + HEADER_ALIGN());                                             \
-                } else {                                                                                \
-                    break;                                                                              \
-                }                                                                                       \
-            }                                                                                           \
-            if(((block_t *)list)->used && !((block_t *)list)->free) {                                   \
-                println(                                                                                \
-                    "%p - %p : %d bytes",                                                               \
-                    (char *)list + sizeof(block_t),                                                     \
-                    (char *)list + ((block_t *)list)->size + sizeof(block_t),                           \
-                    ((block_t *)list)->size                                                             \
-                    );                                                                                  \
-            }                                                                                           \
-            list = (char *)list + ALIGN((((block_t *)list)->size + BLOCK_ALIGN()));                     \
-        }                                                                                               \
-    }                                                                                                   \
+#define _SHOW_ALLOC_MEMORY(ptr, t) {                                            \
+    if (ptr) {                                                                  \
+        header_t *list = ptr;                                                   \
+        while (list->prev) {                                                    \
+            list = list->prev;                                                  \
+        }                                                                       \
+        while (list) {                                                          \
+            println("%s : %p",#t, list);                                        \
+            block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
+            while (block) {                                                     \
+                if (block->used && !block->free) {                              \
+                    println(                                                    \
+                        "%p - %p : %d bytes",                                   \
+                        (char *)list + sizeof(block_t),                         \
+                        (char *)list + block->size + sizeof(block_t),           \
+                        block->size                                             \
+                        );                                                      \
+                }                                                               \
+                block = block->next;                                            \
+            }                                                                   \
+            list = list->next;                                                  \
+        }                                                                       \
+    }                                                                           \
 }
 
-#define _SHOW_ALLOC_MEMORY_LARGE(ptr) {                                                                 \
-    if (!ptr) return;                                                                                   \
-    void *list = ptr;                                                                                   \
-    while (((header_t *)list)->prev) {                                                                  \
-        list = ((header_t *)list)->prev;                                                                \
-    }                                                                                                   \
-    while (list) {                                                                                      \
-        println("LARGE : %p", list);                                                                      \
-        println(                                                                                        \
-            "%p - %p : %d bytes",                                                                    \
-            (char *)list + HEADER_ALIGN(),                                                            \
-            (char *)list + ((block_t *)((char *)list + HEADER_ALIGN()))->size,                                            \
-            ((block_t *)((char *)list + HEADER_ALIGN()))->size                                                              \
-            );                                                                                          \
-        list = ((header_t *)list)->next;                                                                \
-    }                                                                                                   \
+#define _SHOW_ALLOC_MEMORY_LARGE(ptr) {                                         \
+    if (!ptr) return;                                                           \
+    void *list = ptr;                                                           \
+    while (((header_t *)list)->prev) {                                          \
+        list = ((header_t *)list)->prev;                                        \
+    }                                                                           \
+    while (list) {                                                              \
+        println("LARGE : %p", list);                                            \
+        println(                                                                \
+            "%p - %p : %d bytes",                                               \
+            (char *)list + HEADER_ALIGN(),                                      \
+            (char *)list + ((block_t *)((char *)list + HEADER_ALIGN()))->size,  \
+            ((block_t *)((char *)list + HEADER_ALIGN()))->size                  \
+            );                                                                  \
+        list = ((header_t *)list)->next;                                        \
+    }                                                                           \
 }
 
 typedef enum {
@@ -206,16 +191,16 @@ typedef struct block_s {
 
 /* Chunk header size = 64 */
 typedef struct header_s {
-    uint8_t                     :4;
-    uint8_t     type            :2;
-    uint8_t     full            :1;
-    uint8_t     free            :1;
-    uint8_t     free_blocks       ;
-    uint8_t     max_blocks        ;
-    size_t      offset;
-    size_t      chunk_cap;
-    void        *next;
-    void        *prev;
+    uint8_t                                 :4;
+    uint8_t             type                :2;
+    uint8_t             full                :1;
+    uint8_t             free                :1;
+    uint8_t             free_blocks           ;
+    uint8_t             max_blocks            ;
+    size_t              offset;
+    size_t              chunk_cap;
+    void                *next;
+    void                *prev;
 }   header_t;
 
 typedef struct s_chunks {
