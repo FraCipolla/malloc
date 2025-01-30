@@ -12,7 +12,7 @@
 #include <pthread.h>
 extern pthread_mutex_t	g_mutex;
 
-
+/* define nullptr if c version < 23 */
 #if __STDC_VERSION__ != 202311L
     #define false 0 
     #define true !false
@@ -20,6 +20,7 @@ extern pthread_mutex_t	g_mutex;
     #include <stdbool.h>
 #endif
 
+/* Malloc pagesize (4096 on 64bit machines) */
 #define MALLOC_PAGE_SIZE	sysconf(_SC_PAGESIZE)
 
 #define MAP_ANONYMOUS 0x20  /* Don't use a file. */
@@ -31,9 +32,6 @@ extern pthread_mutex_t	g_mutex;
 #define TINY 512
 #define SMALL 4096
 #define LARGE INT64_MAX
-#define TYPE(size) (size )
-
-#define TYPE_TO_SIZE(T) (T == 0 ? TINY : T == 1 ? SMALL : LARGE)
 
 #define INIT(t, size, ptr)                                                      \
 {                                                                               \
@@ -63,7 +61,6 @@ extern pthread_mutex_t	g_mutex;
     header->max_blocks = 0;                                                     \
     header->free_blocks = 0;                                                    \
     header->offset = HEADER_ALIGN();                                            \
-    header->type = t == E_TINY ? 0 : t == E_SMALL ? 1 : 2;                      \
     header->full = t == E_LARGE ? true : false;                                 \
     header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
@@ -111,7 +108,7 @@ extern pthread_mutex_t	g_mutex;
     block->free = 0;                                                            \
     block->last = 1;                                                            \
     block->next = nullptr;                                                      \
-    header->offset += header->type != 2 ? ALIGN(size) + BLOCK_ALIGN() : 0;      \
+    header->offset += block->type != 2 ? ALIGN(size) + BLOCK_ALIGN() : 0;       \
     if ((header->offset + BLOCK_ALIGN() +                                       \
                 (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
         > header->chunk_cap && t != 2)) {                                       \
@@ -203,7 +200,6 @@ typedef struct block_s {
 /* Chunk header size = 64 */
 typedef struct header_s {
     uint8_t                                 :4;
-    uint8_t             type                :2;
     uint8_t             full                :1;
     uint8_t             free                :1;
     uint8_t             free_blocks           ;

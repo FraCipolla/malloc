@@ -4,6 +4,29 @@
 chunks              g_chunks = {0};
 pthread_mutex_t		g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/* memcpy, should be almost always aligned */
+void *ft_memcpy(void *dst, const void *src, size_t len)
+{
+    size_t i;
+
+    /* if aligned copy 1 word at a time */
+    if ((uintptr_t)dst % sizeof(long) == 0 && (uintptr_t)src % sizeof(long) == 0 && len % sizeof(long) == 0) {
+        long *d = dst;
+        const long *s = src;
+        for (i = 0; i < len / sizeof(long); i++) {
+            d[i] = s[i];
+        }
+    } else {
+        char *d = dst;
+        const char *s = src;
+        for (i = 0; i < len; i++) {
+            d[i] = s[i];
+        }
+    }
+    return dst;
+}
+
+/* simplified printf */
 void println(const char *fmt, ...)
 {
     va_list ap;
@@ -47,22 +70,6 @@ void println(const char *fmt, ...)
                 }
                 while (i-- > 0) { write(1, &buff[i], 1); }
                 break;
-            case 'x':
-                unsigned int x = va_arg(ap, long unsigned int);
-                i = 0;
-                while (x > 0) {
-                    buff[i] = str[x % 16];
-                    write(1, &buff[i], 1);
-                    p /= 16;
-                    i++;
-                }
-                switch (i)
-                {
-                case 0: write(1, "00", 1); break;
-                case 1: write(1, "0", 1); write(1, &buff[0], 1); break;
-                default: write(1, &buff[0], 2); break;
-                }
-                break;
             }
         } else {
             write(1, fmt, 1);
@@ -73,6 +80,7 @@ void println(const char *fmt, ...)
     write(1, "\n", 1);
 }
 
+/* init memory zones */
 static inline void* init(size_t size, E_TYPES type)
 {
     switch (type)
@@ -84,6 +92,7 @@ static inline void* init(size_t size, E_TYPES type)
     return nullptr;
 }
 
+/* allocate (2 * sizeof(size_t)) aligned memory block */
 void *malloc(size_t size)
 {
     if (size <= (TINY - BLOCK_ALIGN())) {
@@ -95,6 +104,11 @@ void *malloc(size_t size)
     }
 }
 
+/* 
+ * realloc passed pointer. If no block after the passed one exists
+ * or if the block extra size is enought, set the new size and return the pointer.
+ * Else, call malloc for a new pointer, copy the old pointer to the new one, and free the old pointer
+*/
 void *realloc(void *ptr, size_t size)
 {
     pthread_mutex_lock(&g_mutex);
@@ -103,7 +117,9 @@ void *realloc(void *ptr, size_t size)
     }
 
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
-    if (size <= cast->size) { 
+    if (size <= cast->size || cast->extra_size + cast->size >= size) {
+        cast->extra_size = cast->size + cast->extra_size - size; 
+        cast->size = size;
         return ptr;
     }
     else if (!cast->next && cast->type != 2) {
@@ -115,10 +131,7 @@ void *realloc(void *ptr, size_t size)
         pthread_mutex_unlock(&g_mutex);
         void *new = malloc(size);
         pthread_mutex_lock(&g_mutex);
-        for (long unsigned int i = 0; i < cast->size; i++) {
-            *(char *)(new + i) = *(char *)(ptr + i + BLOCK_ALIGN());
-        }
-        // memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
+        ft_memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
         pthread_mutex_unlock(&g_mutex);
         // fix free between blocks
         free(ptr);
@@ -127,6 +140,10 @@ void *realloc(void *ptr, size_t size)
     return ptr;
 }
 
+/*
+ * free the passed pointer. If it's the last pointer, delete it and move 1 block back.
+ * If the block has adjacent free blocks, merge them to avoid fragmentation.
+ */
 void free(void *ptr)
 {
     pthread_mutex_lock(&g_mutex);
@@ -146,7 +163,11 @@ void free(void *ptr)
         cast->size = 0;
         cast->free = 1;
         head->max_blocks--;
-    } else if (cast->type != 2 && (cast->prev)->used && (cast->prev)->free) {
+    } else if (cast->type != 2 && (cast->next)->used && (cast->next)->free) {
+        head->max_blocks--;
+        cast->extra_size += cast->next->size + cast->next->extra_size + BLOCK_ALIGN();
+        cast->next = cast->next->next;
+    }else if (cast->type != 2 && (cast->prev)->used && (cast->prev)->free) {
         head->max_blocks--;
         (cast->prev)->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
         (cast->prev)->next = cast->next;
