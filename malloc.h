@@ -71,7 +71,10 @@ extern pthread_mutex_t	g_mutex;
     pthread_mutex_lock(&g_mutex);                                               \
     if (!ptr || ((header_t *)ptr)->full) {                                      \
         void *p = init(size, t);                                                \
-        if (!p) { return nullptr; }                                             \
+        if (!p) {                                                               \
+            pthread_mutex_unlock(&g_mutex);                                     \
+            return nullptr;                                                     \
+        }                                                                       \
     }                                                                           \
     header_t *header = ptr;                                                     \
     header->max_blocks++;                                                       \
@@ -82,14 +85,15 @@ extern pthread_mutex_t	g_mutex;
         block = block->next;                                                    \
         prev = block;                                                           \
     }                                                                           \
-    if (block->extra_size >= (size + BLOCK_ALIGN())) {                          \
+    if (block->next && block->extra_size >= (size + BLOCK_ALIGN())) {           \
         block_t *next = block->next;                                            \
         prev = block;                                                           \
         block->extra_size = 0;                                                  \
         block =                                                                 \
             (block_t *)((char *)block + (block->size + BLOCK_ALIGN()));         \
         block->next = next;                                                     \
-        block->extra_size = block->prev->extra_size - block->prev->size;        \
+        block->extra_size =                                                     \
+        block->prev->extra_size - (block->prev->size + BLOCK_ALIGN());          \
     } else if (block->used) {                                                   \
         block =                                                                 \
             (block_t *)                                                         \
@@ -98,14 +102,13 @@ extern pthread_mutex_t	g_mutex;
     }                                                                           \
     if (prev) {                                                                 \
         prev->last = 0;                                                         \
-        block->prev = prev;                                                     \
     }                                                                           \
+    block->prev = prev;                                                         \
     block->size = size;                                                         \
     /* Round request up to a multiple of 64 that is at least 64 */              \
     if (!block->extra_size) block->extra_size = ALIGN(size) - size;             \
     block->used = 1;                                                            \
     block->type = t;                                                            \
-    block->free = 0;                                                            \
     block->last = 1;                                                            \
     block->next = nullptr;                                                      \
     header->offset += block->type != 2 ? ALIGN(size) + BLOCK_ALIGN() : 0;       \
@@ -148,8 +151,8 @@ extern pthread_mutex_t	g_mutex;
                 if (block->used && !block->free) {                              \
                     println(                                                    \
                         "%p - %p : %d bytes",                                   \
-                        (char *)list + BLOCK_ALIGN(),                           \
-                        (char *)list + block->size + BLOCK_ALIGN(),             \
+                        (char *)block + BLOCK_ALIGN(),                          \
+                        (char *)block + block->size + BLOCK_ALIGN(),            \
                         block->size                                             \
                         );                                                      \
                 }                                                               \
@@ -184,14 +187,14 @@ typedef enum {
     E_LARGE
 }   E_TYPES;
 
-/* Block header size = 32 bytes */
+/* Block header size = 24 bytes */
 typedef struct block_s {
-    uint32_t            type                :2 ;   /* Type of block */
-    uint32_t            used                :1 ;   /* Whether the block is used */
-    uint32_t            free                :1 ;   /* Whether the block is being freed after used */
-    uint32_t            first               :1 ;   /* Whether the block is the first one */
-    uint32_t            last                :1 ;   /* Whether the block is the last one */
-    uint32_t            size                :32;   /* Block size */
+    uint64_t            type                :2 ;   /* Type of block */
+    uint64_t            used                :1 ;   /* Whether the block is used */
+    uint64_t            free                :1 ;   /* Whether the block is being freed after used */
+    uint64_t            first               :1 ;   /* Whether the block is the first one */
+    uint64_t            last                :1 ;   /* Whether the block is the last one */
+    uint64_t            size                :32;   /* Block size */
     uint64_t            extra_size          :26;   /* Total block capacity. Needed for defragmentation */
     struct block_s*     next                   ;   /* Mark the prev block*/
     struct block_s*     prev                   ;   /* Mark the prev block*/

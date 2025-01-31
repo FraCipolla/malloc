@@ -8,19 +8,45 @@ pthread_mutex_t		g_mutex = PTHREAD_MUTEX_INITIALIZER;
 void *ft_memcpy(void *dst, const void *src, size_t len)
 {
     size_t i;
+    unsigned long int *longword_ptr;
+    unsigned long int longword, himagic, lomagic;
 
+    /* Bits 31, 24, 16, and 8 of this number are zero.  Call these bits
+     the "holes."  Note that there is a hole just to the left of
+     each byte, with an extra at the end:
+
+     bits:  01111110 11111110 11111110 11111111
+     bytes: AAAAAAAA BBBBBBBB CCCCCCCC DDDDDDDD
+
+     The 1-bits make sure that carries propagate to the next 0-bit.
+     The 0-bits provide holes for carries to fall into.  */
+    himagic = 0x80808080L; // 10000000100000001000000010000000
+    lomagic = 0x01010101L; // 1000000010000000100000001
+    /* 64-bit version of the magic.  */
+    /* Do the shift in two steps to avoid a warning if long has 32 bits.  */
+    if (sizeof (longword) > 4) {
+      himagic = ((himagic << 16) << 16) | himagic;
+      lomagic = ((lomagic << 16) << 16) | lomagic;
+    }
     /* if aligned copy 1 word at a time */
     if ((uintptr_t)dst % sizeof(long) == 0 && (uintptr_t)src % sizeof(long) == 0 && len % sizeof(long) == 0) {
-        long *d = dst;
-        const long *s = src;
-        for (i = 0; i < len / sizeof(long); i++) {
-            d[i] = s[i];
+        longword_ptr = (unsigned long int *)dst;
+        const unsigned long int *s = (unsigned long int *)src;
+        for (i = 0; i < len / sizeof(unsigned long int); i++) {
+            longword_ptr[i] = s[i];
+            longword = longword_ptr[i];
+            if (((longword - lomagic) & ~longword & himagic) != 0) {
+                return dst;
+            }
         }
     } else {
         char *d = dst;
         const char *s = src;
         for (i = 0; i < len; i++) {
             d[i] = s[i];
+            if (d[i] == 0) {
+                return dst;
+            }
         }
     }
     return dst;
@@ -95,6 +121,9 @@ static inline void* init(size_t size, E_TYPES type)
 /* allocate (2 * sizeof(size_t)) aligned memory block */
 void *malloc(size_t size)
 {
+    if (size == 0) {
+        return nullptr;
+    }
     if (size <= (TINY - BLOCK_ALIGN())) {
         _MALLOC(size, E_TINY, g_chunks.small);
     } else if (size <= (SMALL - BLOCK_ALIGN())) {
@@ -113,16 +142,21 @@ void *realloc(void *ptr, size_t size)
 {
     pthread_mutex_lock(&g_mutex);
     if (!ptr) {
+        pthread_mutex_unlock(&g_mutex);
         return nullptr;
+    } else if (size == 0) {
+        ptr = nullptr;
+        pthread_mutex_unlock(&g_mutex);
+        return ptr;
     }
 
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
     if (size <= cast->size || cast->extra_size + cast->size >= size) {
         cast->extra_size = cast->size + cast->extra_size - size; 
         cast->size = size;
+        pthread_mutex_unlock(&g_mutex);
         return ptr;
-    }
-    else if (!cast->next && cast->type != 2) {
+    } else if (!cast->next && cast->type != 2) {
         header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
         head->offset += size - cast->size;
         cast->size = size;
@@ -133,10 +167,10 @@ void *realloc(void *ptr, size_t size)
         pthread_mutex_lock(&g_mutex);
         ft_memcpy(new, (void *)cast + BLOCK_ALIGN(), cast->size);
         pthread_mutex_unlock(&g_mutex);
-        // fix free between blocks
         free(ptr);
         return new;
     }
+    pthread_mutex_unlock(&g_mutex);
     return ptr;
 }
 
@@ -147,31 +181,38 @@ void *realloc(void *ptr, size_t size)
 void free(void *ptr)
 {
     pthread_mutex_lock(&g_mutex);
-    if (!ptr) { return ;}
+    if (!ptr) {
+        pthread_mutex_unlock(&g_mutex);
+        return ;
+    }
 
     ptr = (char *)ptr - BLOCK_ALIGN();
     block_t *cast = ptr;
     header_t *head = \
         cast->type == 0 ? g_chunks.small :  \
             cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
-    cast->free = 1;
+    cast->used = 0;
     size_t size = 0;
     if (cast->type != 2 && !cast->next) {
+        if (cast->prev) {
+            cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
+            cast->prev->next = nullptr;
+        }
         head->offset = head->offset - (cast->size + cast->extra_size + BLOCK_ALIGN());
-        cast->used = 0;
-        cast->extra_size = 0;
-        cast->size = 0;
-        cast->free = 1;
+        // cast->extra_size = 0;
+        // cast->size = 0;
         head->max_blocks--;
-    } else if (cast->type != 2 && (cast->next)->used && (cast->next)->free) {
+    } else if (cast->type != 2 && cast->next && !((cast->next)->used)) {
         head->max_blocks--;
         cast->extra_size += cast->next->size + cast->next->extra_size + BLOCK_ALIGN();
         cast->next = cast->next->next;
-    }else if (cast->type != 2 && (cast->prev)->used && (cast->prev)->free) {
+    } else if (cast->type != 2 && cast->prev && !((cast->prev)->used)) {
         head->max_blocks--;
+        cast->next->prev = cast->prev;
         (cast->prev)->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
         (cast->prev)->next = cast->next;
     } else {
+        cast->used = 0;
         head->free_blocks++;
     }
 
@@ -193,10 +234,3 @@ void show_alloc_mem()
     SHOW_ALLOC_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);
     pthread_mutex_unlock(&g_mutex);
 }
-
-// void show_alloc_mem_ex()
-// {
-//     pthread_mutex_lock(&g_mutex);
-//     SHOW_ALLOC_MEMORY_EX(g_chunks.small, g_chunks.medium, g_chunks.large);
-//     pthread_mutex_unlock(&g_mutex);
-// }
