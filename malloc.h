@@ -79,13 +79,15 @@ extern pthread_mutex_t	g_mutex;
     header_t *header = ptr;                                                     \
     header->max_blocks++;                                                       \
     block_t *block = (block_t *)((char *)ptr + HEADER_ALIGN());                 \
+    block->first = 1;                                                           \
     block_t *prev = block->used ? block : nullptr;                              \
     while (block->next && block->next->used                                     \
             && block->extra_size < (size + BLOCK_ALIGN())) {                    \
         block = block->next;                                                    \
         prev = block;                                                           \
     }                                                                           \
-    if (block->next && block->extra_size >= (size + BLOCK_ALIGN())) {           \
+    if (!block->first && block->used                                            \
+        && block->extra_size >= (ALIGN(size) + BLOCK_ALIGN())) {                \
         block_t *next = block->next;                                            \
         prev = block;                                                           \
         block->extra_size = 0;                                                  \
@@ -138,6 +140,16 @@ extern pthread_mutex_t	g_mutex;
     _SHOW_ALLOC_MEMORY(medium, SMALL);                                          \
     _SHOW_ALLOC_MEMORY(large, LARGE)
 
+#define HEX_DUMP(small, medium, large)                                          \
+    _HEX_DUMP(small);                                                           \
+    _HEX_DUMP(medium);                                                          \
+    _HEX_DUMP(large); 
+
+#define PRINT_MEMORY(small, medium, large)                                      \
+    _PRINT_MEMORY(small, t);                                                    \
+    _PRINT_MEMORY(medium, t);                                                   \
+    _PRINT_MEMORY(large, t); 
+
 #define _SHOW_ALLOC_MEMORY(ptr, t) {                                            \
     if (ptr) {                                                                  \
         header_t *list = ptr;                                                   \
@@ -145,12 +157,12 @@ extern pthread_mutex_t	g_mutex;
             list = list->prev;                                                  \
         }                                                                       \
         while (list) {                                                          \
-            println("%s : %p",#t, list);                                        \
+            print("%s : %p\n",#t, list);                                        \
             block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
             while (block) {                                                     \
                 if (block->used && !block->free) {                              \
-                    println(                                                    \
-                        "%p - %p : %d bytes",                                   \
+                    print(                                                      \
+                        "%p - %p : %d bytes\n",                                 \
                         (char *)block + BLOCK_ALIGN(),                          \
                         (char *)block + block->size + BLOCK_ALIGN(),            \
                         block->size                                             \
@@ -163,21 +175,60 @@ extern pthread_mutex_t	g_mutex;
     }                                                                           \
 }
 
-#define _SHOW_ALLOC_MEMORY_LARGE(ptr) {                                         \
-    if (!ptr) return;                                                           \
-    void *list = ptr;                                                           \
-    while (((header_t *)list)->prev) {                                          \
-        list = ((header_t *)list)->prev;                                        \
+#define PRINT_HEX_DUMP(ptr, size)                                               \
+    unsigned char *data = (unsigned char*)ptr;                                  \
+    char hex_digits[] = "0123456789ABCDEF";                                     \
+    print("%x:  ", data);                                                       \
+    for (size_t i = 0; i < size; i++) {                                         \
+        char hex[3] =                                                           \
+            { hex_digits[(data[i] >> 4) & 0x0F], hex_digits[data[i] & 0x0F]};   \
+        print("%s ", hex);                                                      \
+        if ((i + 1) % 16 == 0) {                                                \
+            if (i + 1 < size) {                                                 \
+                print("\n%x:  ", &data[i + 1]);                                 \
+            }                                                                   \
+        }                                                                       \
     }                                                                           \
-    while (list) {                                                              \
-        println("LARGE : %p", list);                                            \
-        println(                                                                \
-            "%p - %p : %d bytes",                                               \
-            (char *)list + HEADER_ALIGN(),                                      \
-            (char *)list + ((block_t *)((char *)list + HEADER_ALIGN()))->size,  \
-            ((block_t *)((char *)list + HEADER_ALIGN()))->size                  \
-            );                                                                  \
-        list = ((header_t *)list)->next;                                        \
+    write(1, "\n", 1);                                                          \
+
+#define _HEX_DUMP(ptr) {                                                        \
+    if (ptr) {                                                                  \
+        header_t *list = ptr;                                                   \
+        while (list->prev) {                                                    \
+            list = list->prev;                                                  \
+        }                                                                       \
+        while (list) {                                                          \
+            print("%p\n",list);                                                 \
+            block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
+            while (block) {                                                     \
+                PRINT_HEX_DUMP(block, block->size);                             \
+                block = block->next;                                            \
+            }                                                                   \
+            list = list->next;                                                  \
+        }                                                                       \
+    }                                                                           \
+}
+
+// ■
+#define _PRINT_MEMORY(ptr, t) {                                                 \
+    if (ptr) {                                                                  \
+        header_t *list = ptr;                                                   \
+        while (list->prev) {                                                    \
+            list = list->prev;                                                  \
+        }                                                                       \
+        while (list) {                                                          \
+            print("%s : %p\n",#t, list);                                        \
+            size_t size = list->chunk_cap;        \
+            unsigned char *p = (unsigned char *)list; \
+            for (size_t i = 0; i < size; i++) {                                                     \
+                if (p[i]) { \
+                    print("■"); \
+                } else { \
+                    print(" "); \
+                }\
+            }                                                                   \
+            list = list->next;                                                  \
+        }                                                                       \
     }                                                                           \
 }
 
@@ -227,7 +278,8 @@ void *realloc(void *ptr, size_t size);
 void show_alloc_mem();
 void hex_dump();
 void show_alloc_mem_ex();
+void print_memory();
 
-void println(const char *fmt, ...);
+void print(const char *fmt, ...);
 
 #endif

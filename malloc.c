@@ -53,7 +53,7 @@ void *ft_memcpy(void *dst, const void *src, size_t len)
 }
 
 /* simplified printf */
-void println(const char *fmt, ...)
+void print(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -96,6 +96,18 @@ void println(const char *fmt, ...)
                 }
                 while (i-- > 0) { write(1, &buff[i], 1); }
                 break;
+            case 'x':
+                long unsigned int x = va_arg(ap, long unsigned int);
+                i = 0;
+                while (x > 0) {
+                    buff[i] = str[x % 16];
+                    x /= 16;
+                    i++;
+                    if (i == 8) {
+                        break;
+                    }
+                }
+                while (i-- > 0) { write(1, &buff[i], 1); }
             }
         } else {
             write(1, fmt, 1);
@@ -103,7 +115,6 @@ void println(const char *fmt, ...)
         fmt++;
     }
     va_end(ap);
-    write(1, "\n", 1);
 }
 
 /* init memory zones */
@@ -145,8 +156,9 @@ void *realloc(void *ptr, size_t size)
         pthread_mutex_unlock(&g_mutex);
         return nullptr;
     } else if (size == 0) {
-        ptr = nullptr;
         pthread_mutex_unlock(&g_mutex);
+        free(ptr);
+        ptr = nullptr;
         return ptr;
     }
 
@@ -186,8 +198,7 @@ void free(void *ptr)
         return ;
     }
 
-    ptr = (char *)ptr - BLOCK_ALIGN();
-    block_t *cast = ptr;
+    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
     header_t *head = \
         cast->type == 0 ? g_chunks.small :  \
             cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
@@ -198,25 +209,42 @@ void free(void *ptr)
             cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
             cast->prev->next = nullptr;
         }
+        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
         head->offset = head->offset - (cast->size + cast->extra_size + BLOCK_ALIGN());
-        // cast->extra_size = 0;
-        // cast->size = 0;
         head->max_blocks--;
     } else if (cast->type != 2 && cast->next && !((cast->next)->used)) {
         head->max_blocks--;
+        if (cast->prev && cast->prev->used) {
+            cast->prev->extra_size += cast->next->size + cast->next->extra_size + BLOCK_ALIGN();
+            cast->prev->next = cast->next->last ? nullptr : cast->next;
+        }
         cast->extra_size += cast->next->size + cast->next->extra_size + BLOCK_ALIGN();
-        cast->next = cast->next->next;
+        bzero(cast->next, cast->next->size + cast->next->extra_size + BLOCK_ALIGN());
+        cast = cast->next->next;
     } else if (cast->type != 2 && cast->prev && !((cast->prev)->used)) {
         head->max_blocks--;
         cast->next->prev = cast->prev;
         (cast->prev)->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
         (cast->prev)->next = cast->next;
-    } else {
-        cast->used = 0;
+        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
+    } else if (cast->type != 2) {
+        if (cast->prev && cast->next) {
+            cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
+            cast->prev->next = cast->next;
+            cast->next->prev = cast->prev;
+            bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
+        } else if (cast->prev) {
+            cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
+            cast->prev->next = nullptr;
+            bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
+        } else if (cast->next) {    // no prev, we're in the first block
+            cast->extra_size += cast->size;
+            cast->size = 0;
+        }
         head->free_blocks++;
     }
 
-    if (head->full && head->free_blocks == head->max_blocks) {
+    if ((head->full && head->free_blocks == head->max_blocks) || cast->type == 2) {
         size = head->chunk_cap;
         switch (cast->type)
         {
@@ -232,5 +260,17 @@ void show_alloc_mem()
 {
     pthread_mutex_lock(&g_mutex);
     SHOW_ALLOC_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);
+    pthread_mutex_unlock(&g_mutex);
+}
+
+void hex_dump() {
+    pthread_mutex_lock(&g_mutex);
+    HEX_DUMP(g_chunks.small, g_chunks.medium, g_chunks.large);
+    pthread_mutex_unlock(&g_mutex);
+}
+
+void print_memory() {
+    pthread_mutex_lock(&g_mutex);
+    PRINT_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);
     pthread_mutex_unlock(&g_mutex);
 }

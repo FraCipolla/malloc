@@ -31,7 +31,7 @@ int main()
         int* ptr1 = (int*) malloc(sizeof(int));
         int* ptr2 = (int*) malloc(sizeof(int));
         int* ptr3 = (int*) malloc(sizeof(int));
-    
+
         assert(ptr1 != NULL);
         assert(ptr2 != NULL);
         assert(ptr3 != NULL);
@@ -62,7 +62,7 @@ int main()
         ptr[0] = 10;
         ptr[1] = 20;
         ptr = (int*) realloc(ptr, sizeof(int) * 4);
-        assert(ptr != NULL);  // Verifica che realloc non fallisca
+        assert(ptr != NULL); 
         ptr[2] = 30;
         ptr[3] = 40;
 
@@ -121,6 +121,7 @@ int main()
 
     /* very big malloc */
     {
+        print("\nvery big malloc\n\n");
         size_t large_size = 1024 * 1024 * 1024;
         void* ptr = malloc(large_size);
         assert(ptr != NULL);
@@ -129,6 +130,7 @@ int main()
 
     /* malloc unitialize memory */
     {
+        print("\nmalloc unitialize memory\n\n");
         int* ptr = (int*) malloc(sizeof(int));
         assert(ptr != NULL);
         free(ptr);
@@ -136,6 +138,7 @@ int main()
 
     /* multiple malloc and free in random order */
     {
+        print("\nmultiple malloc and free in random order\n\n");
         int* ptr1 = (int*) malloc(sizeof(int) * 10);
         assert(ptr1 != NULL);
         int* ptr2 = (int*) malloc(sizeof(int) * 20);
@@ -162,5 +165,23 @@ int main()
         free(ptr3);
         free(ptr5);
         free(ptr6);
+    }
+
+    /* testing hex_dump function*/
+    {
+        size_t sizes[] = {16, 32, 64, 128, 256, 1024, 4096, 8192, 16384};
+
+        for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
+            size_t size = sizes[i];
+
+            void *buffer = malloc(size);
+            assert(buffer != NULL);
+
+            for (size_t j = 0; j < size; j++) {
+                ((unsigned char*)buffer)[j] = (unsigned char)(j % 256);
+            }
+            hex_dump();
+            free(buffer);
+        }
     }
 }
