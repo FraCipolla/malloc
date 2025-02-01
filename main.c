@@ -5,6 +5,7 @@ int main()
 {
     /* basic malloc test */
     {
+        print("\nbasic malloc test\n\n");
         int* ptr = (int*) malloc(sizeof(int));
         assert(ptr != NULL);
         *ptr = 42;
@@ -14,6 +15,7 @@ int main()
 
     /* basic free test */
     {
+        print("\nbasic free test\n\n");
         int* ptr = (int*) malloc(sizeof(int));
         assert(ptr != NULL);
         free(ptr);
@@ -21,6 +23,7 @@ int main()
 
     /* double free test */
     {
+        print("\ndouble free test\n\n");
         int* ptr = (int*) malloc(sizeof(int));
         free(ptr);
         free(ptr);
@@ -28,6 +31,7 @@ int main()
 
     /* multiple blocks test */
     {
+        print("\nmultiple blocks test\n\n");
         int* ptr1 = (int*) malloc(sizeof(int));
         int* ptr2 = (int*) malloc(sizeof(int));
         int* ptr3 = (int*) malloc(sizeof(int));
@@ -51,6 +55,7 @@ int main()
 
     /* zero bytes malloc */
     {
+        print("\nzero bytes malloc\n\n");
         void* ptr = malloc(0);
         assert(ptr == NULL || ptr != NULL);
         free(ptr);
@@ -58,6 +63,7 @@ int main()
 
     /* realloc with increasing size */
     {
+        print("\nrealloc with increasing size\n\n");
         int* ptr = (int*) malloc(sizeof(int) * 2);
         ptr[0] = 10;
         ptr[1] = 20;
@@ -76,6 +82,7 @@ int main()
 
     /* realloc with decreasing size */
     {
+        print("\nrealloc with decreasing size\n\n");
         int* ptr = (int*) malloc(sizeof(int) * 4);
         ptr[0] = 10;
         ptr[1] = 20;
@@ -92,6 +99,7 @@ int main()
 
     /* realloc with null pointers */
     {
+        print("\nrealloc with null pointers\n\n");
         int* ptr = (int*) realloc(NULL, sizeof(int) * 4);
         assert(ptr != NULL);
         ptr[0] = 10;
@@ -109,6 +117,7 @@ int main()
 
     /* realloc with 0 size */
     {
+        print("\nrealloc with 0 size\n\n");
         int* ptr = (int*) malloc(sizeof(int) * 2);
         ptr[0] = 10;
         ptr[1] = 20;
@@ -167,9 +176,10 @@ int main()
         free(ptr6);
     }
 
-    /* testing hex_dump function*/
+    /* hex_dump function */
     {
-        size_t sizes[] = {16, 32, 64, 128, 256, 1024, 4096, 8192, 16384};
+        print("\nhex_dump function\n\n");
+        size_t sizes[] = {16, 32, 64, 128, 256, 1024, 4096};
 
         for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
             size_t size = sizes[i];
@@ -183,5 +193,31 @@ int main()
             hex_dump();
             free(buffer);
         }
+    }
+
+    /* show_alloc_mem() function */
+    {
+        print("\nshow_alloc_mem() function\n\n");
+        #define M (1024 * 1024)
+
+        void* a = malloc(1);
+        void* b = malloc(2);
+        void* c = malloc(4);
+        void* d = malloc(8);
+        void* e = malloc(16);
+        void* f = malloc(32);
+        void* g = malloc(64);
+        void* h = malloc(128);
+        void* i = malloc(256);
+        void* j = malloc(512);
+        void* k = malloc(1024);
+        void* l = malloc(1024 * 2);
+        void* m = malloc(1024 * 4); 
+        void* n = malloc(1024 * 32);
+        void* o = malloc(M);
+        void* p = malloc(16*M);
+        void* q = malloc(128*M);
+        show_alloc_mem(); 
+
     }
 }

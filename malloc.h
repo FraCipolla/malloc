@@ -60,7 +60,6 @@ extern pthread_mutex_t	g_mutex;
     header_t *header = ptr;                                                     \
     header->max_blocks = 0;                                                     \
     header->free_blocks = 0;                                                    \
-    header->offset = HEADER_ALIGN();                                            \
     header->full = t == E_LARGE ? true : false;                                 \
     header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
@@ -86,7 +85,7 @@ extern pthread_mutex_t	g_mutex;
         block = block->next;                                                    \
         prev = block;                                                           \
     }                                                                           \
-    if (!block->first && block->used                                            \
+    if (block->used                                            \
         && block->extra_size >= (ALIGN(size) + BLOCK_ALIGN())) {                \
         block_t *next = block->next;                                            \
         prev = block;                                                           \
@@ -113,10 +112,9 @@ extern pthread_mutex_t	g_mutex;
     block->type = t;                                                            \
     block->last = 1;                                                            \
     block->next = nullptr;                                                      \
-    header->offset += block->type != 2 ? ALIGN(size) + BLOCK_ALIGN() : 0;       \
-    if ((header->offset + BLOCK_ALIGN() +                                       \
-                (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
-        > header->chunk_cap && t != 2)) {                                       \
+    if (t != 2 && (ptr + header->chunk_cap) - (void *)block <                                       \
+            (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
+        ) {                                       \
         header->full = 1;                                                       \
     }                                                                           \
     pthread_mutex_unlock(&g_mutex);                                             \
@@ -258,7 +256,6 @@ typedef struct header_s {
     uint8_t             free                :1;
     uint8_t             free_blocks           ;
     uint8_t             max_blocks            ;
-    size_t              offset;
     size_t              chunk_cap;
     void                *next;
     void                *prev;

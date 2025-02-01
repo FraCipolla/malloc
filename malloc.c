@@ -132,9 +132,6 @@ static inline void* init(size_t size, E_TYPES type)
 /* allocate (2 * sizeof(size_t)) aligned memory block */
 void *malloc(size_t size)
 {
-    if (size == 0) {
-        return nullptr;
-    }
     if (size <= (TINY - BLOCK_ALIGN())) {
         _MALLOC(size, E_TINY, g_chunks.small);
     } else if (size <= (SMALL - BLOCK_ALIGN())) {
@@ -169,8 +166,6 @@ void *realloc(void *ptr, size_t size)
         pthread_mutex_unlock(&g_mutex);
         return ptr;
     } else if (!cast->next && cast->type != 2) {
-        header_t *head = cast->type == 0 ? g_chunks.small : cast->type == 1 ? g_chunks.medium : g_chunks.large;
-        head->offset += size - cast->size;
         cast->size = size;
         cast->extra_size = ALIGN(size);
     } else {
@@ -203,48 +198,41 @@ void free(void *ptr)
         cast->type == 0 ? g_chunks.small :  \
             cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());
     cast->used = 0;
+    head->max_blocks--;
     size_t size = 0;
-    if (cast->type != 2 && !cast->next) {
-        if (cast->prev) {
+    if (cast->type != 2) {
+        if (!cast->next && !cast->prev) {
+            bzero(cast, cast->size + cast->extra_size);
+        } else if (!cast->next) {
             cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
             cast->prev->next = nullptr;
-        }
-        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
-        head->offset = head->offset - (cast->size + cast->extra_size + BLOCK_ALIGN());
-        head->max_blocks--;
-    } else if (cast->type != 2 && cast->next && !((cast->next)->used)) {
-        head->max_blocks--;
-        if (cast->prev && cast->prev->used) {
-            cast->prev->extra_size += cast->next->size + cast->next->extra_size + BLOCK_ALIGN();
-            cast->prev->next = cast->next->last ? nullptr : cast->next;
-        }
-        cast->extra_size += cast->next->size + cast->next->extra_size + BLOCK_ALIGN();
-        bzero(cast->next, cast->next->size + cast->next->extra_size + BLOCK_ALIGN());
-        cast = cast->next->next;
-    } else if (cast->type != 2 && cast->prev && !((cast->prev)->used)) {
-        head->max_blocks--;
-        cast->next->prev = cast->prev;
-        (cast->prev)->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
-        (cast->prev)->next = cast->next;
-        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
-    } else if (cast->type != 2) {
-        if (cast->prev && cast->next) {
-            cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
-            cast->prev->next = cast->next;
-            cast->next->prev = cast->prev;
+            if (cast->prev->first) {
+                cast->prev->used = 0;
+            }
             bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
-        } else if (cast->prev) {
-            cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
-            cast->prev->next = nullptr;
-            bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
-        } else if (cast->next) {    // no prev, we're in the first block
+        } else if (!cast->prev) { // first block
+            // keep the block header to iterate the chunk
+            cast->used = 1;
             cast->extra_size += cast->size;
             cast->size = 0;
+        } else {
+            if (cast->prev && cast->next) {
+                cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
+                cast->prev->next = cast->next;
+                cast->next->prev = cast->prev;
+                bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
+            } else if (cast->prev) {
+                cast->prev->extra_size += cast->size + cast->extra_size + BLOCK_ALIGN();
+                cast->prev->next = nullptr;
+                bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());
+            } else if (cast->next) {    // no prev, we're in the first block
+                cast->extra_size += cast->size;
+                cast->size = 0;
+            }
         }
-        head->free_blocks++;
     }
 
-    if ((head->full && head->free_blocks == head->max_blocks) || cast->type == 2) {
+    if ((head->full && head->free_blocks == head->max_blocks) || (cast && cast->type == 2)) {
         size = head->chunk_cap;
         switch (cast->type)
         {
