@@ -179,7 +179,7 @@ int main()
     /* hex_dump function */
     {
         print("\nhex_dump function\n\n");
-        size_t sizes[] = {16, 32, 64, 128, 256, 1024, 4096};
+        size_t sizes[] = {16, 32, 64, 128, 256, 1024};
 
         for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
             size_t size = sizes[i];
@@ -190,34 +190,35 @@ int main()
             for (size_t j = 0; j < size; j++) {
                 ((unsigned char*)buffer)[j] = (unsigned char)(j % 256);
             }
-            hex_dump();
+            print_memory();
             free(buffer);
         }
     }
 
     /* show_alloc_mem() function */
-    {
-        print("\nshow_alloc_mem() function\n\n");
-        #define M (1024 * 1024)
+    // {
+    //     print("\nshow_alloc_mem() function\n\n");
+    //     #define M (1024 * 1024)
 
-        void* a = malloc(1);
-        void* b = malloc(2);
-        void* c = malloc(4);
-        void* d = malloc(8);
-        void* e = malloc(16);
-        void* f = malloc(32);
-        void* g = malloc(64);
-        void* h = malloc(128);
-        void* i = malloc(256);
-        void* j = malloc(512);
-        void* k = malloc(1024);
-        void* l = malloc(1024 * 2);
-        void* m = malloc(1024 * 4); 
-        void* n = malloc(1024 * 32);
-        void* o = malloc(M);
-        void* p = malloc(16*M);
-        void* q = malloc(128*M);
-        show_alloc_mem(); 
+    //     void* a = malloc(1);
+    //     void* b = malloc(2);
+    //     void* c = malloc(4);
+    //     void* d = malloc(8);
+    //     void* e = malloc(16);
+    //     void* f = malloc(32);
+    //     void* g = malloc(64);
+    //     void* h = malloc(128);
+    //     void* i = malloc(256);
+    //     void* j = malloc(512);
+    //     void* k = malloc(1024);
+    //     void* l = malloc(1024 * 2);
+    //     void* m = malloc(1024 * 4); 
+    //     void* n = malloc(1024 * 32);
+    //     void* o = malloc(M);
+    //     void* p = malloc(16*M);
+    //     void* q = malloc(128*M);
+        
+    //     show_alloc_mem(); 
 
-    }
+    // }
 }

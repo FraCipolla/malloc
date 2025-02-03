@@ -144,9 +144,9 @@ extern pthread_mutex_t	g_mutex;
     _HEX_DUMP(large); 
 
 #define PRINT_MEMORY(small, medium, large)                                      \
-    _PRINT_MEMORY(small, t);                                                    \
-    _PRINT_MEMORY(medium, t);                                                   \
-    _PRINT_MEMORY(large, t); 
+    _PRINT_MEMORY(small, TINY);                                                    \
+    _PRINT_MEMORY(medium, SMALL);                                                   \
+    _PRINT_MEMORY(large, LARGE); 
 
 #define _SHOW_ALLOC_MEMORY(ptr, t) {                                            \
     if (ptr) {                                                                  \
@@ -196,11 +196,13 @@ extern pthread_mutex_t	g_mutex;
             list = list->prev;                                                  \
         }                                                                       \
         while (list) {                                                          \
-            print("%p\n",list);                                                 \
             block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
-            while (block) {                                                     \
-                PRINT_HEX_DUMP(block, block->size);                             \
-                block = block->next;                                            \
+            if (block && block->size > 0) {                                     \
+                print("%p\n",list);                                             \
+                while (block) {                                                 \
+                    PRINT_HEX_DUMP(block, block->size);                         \
+                    block = block->next;                                        \
+                }                                                               \
             }                                                                   \
             list = list->next;                                                  \
         }                                                                       \
@@ -222,9 +224,10 @@ extern pthread_mutex_t	g_mutex;
                 if (p[i]) { \
                     print("■"); \
                 } else { \
-                    print(" "); \
+                    print("/"); \
                 }\
             }                                                                   \
+            print("\n"); \
             list = list->next;                                                  \
         }                                                                       \
     }                                                                           \
