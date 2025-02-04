@@ -29,6 +29,8 @@ extern pthread_mutex_t	g_mutex;
 #define HEADER_ALIGN() (((sizeof(header_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 #define BLOCK_ALIGN() (((sizeof(block_t)) + (ALIGNMENT) - 1) & ~((ALIGNMENT) - 1))
 
+#define TTYPE(t) t == E_TINY ? "TINY" : t == E_SMALL ? "SMALL" : "LARGE"
+
 #define TINY 512
 #define SMALL 4096
 #define LARGE INT64_MAX
@@ -63,11 +65,15 @@ extern pthread_mutex_t	g_mutex;
     header->full = t == E_LARGE ? true : false;                                 \
     header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
+    g_chunks.history.idx +=                                                     \
+        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
+        "New chunk of type %s mapped:\n\t- Address: %p\n\t- Chunk size: %ld\n\t-\
+ Header size: %ld\n",     \
+        TTYPE(t), ptr, alloc_size, HEADER_ALIGN());                             \
     return ptr;                                                                 \
 }
 
 #define _MALLOC(size, t, ptr)                                                   \
-    pthread_mutex_lock(&g_mutex);                                               \
     if (!ptr || ((header_t *)ptr)->full) {                                      \
         void *p = init(size, t);                                                \
         if (!p) {                                                               \
@@ -85,7 +91,7 @@ extern pthread_mutex_t	g_mutex;
         block = block->next;                                                    \
         prev = block;                                                           \
     }                                                                           \
-    if (block->used                                            \
+    if (block->next && block->used                                              \
         && block->extra_size >= (ALIGN(size) + BLOCK_ALIGN())) {                \
         block_t *next = block->next;                                            \
         prev = block;                                                           \
@@ -94,7 +100,7 @@ extern pthread_mutex_t	g_mutex;
             (block_t *)((char *)block + (block->size + BLOCK_ALIGN()));         \
         block->next = next;                                                     \
         block->extra_size =                                                     \
-        block->prev->extra_size - (block->prev->size + BLOCK_ALIGN());          \
+            block->prev->extra_size - (block->prev->size + BLOCK_ALIGN());      \
     } else if (block->used) {                                                   \
         block =                                                                 \
             (block_t *)                                                         \
@@ -107,20 +113,89 @@ extern pthread_mutex_t	g_mutex;
     block->prev = prev;                                                         \
     block->size = size;                                                         \
     /* Round request up to a multiple of 64 that is at least 64 */              \
-    if (!block->extra_size) block->extra_size = ALIGN(size) - size;             \
+    if (!block->extra_size) {                                                   \
+        block->extra_size = t == E_LARGE ?                                      \
+            header->chunk_cap - (size + BLOCK_ALIGN() + HEADER_ALIGN()) :       \
+            ALIGN(size) - size;                                                 \
+    }                                                                           \
     block->used = 1;                                                            \
     block->type = t;                                                            \
     block->last = 1;                                                            \
     block->next = nullptr;                                                      \
-    if (t != 2 && (ptr + header->chunk_cap) - (void *)block <                                       \
-            (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                 \
-        ) {                                       \
+    if (t != 2 && (ptr + header->chunk_cap) - (void *)block <                   \
+            (t == E_TINY ? TINY : t == E_SMALL ? SMALL : 0)                     \
+        ) {                                                                     \
         header->full = 1;                                                       \
     }                                                                           \
-    pthread_mutex_unlock(&g_mutex);                                             \
-    return ((void *)((char *)block + BLOCK_ALIGN()))                         
+    g_chunks.history.idx +=                                                     \
+        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
+            "Allocated block of type %s\n\t- Address: %p\n\t- Header Size: %ld\n\
+\t- Size: %ld\n\t- Extra size: %d\n",                                           \
+            TTYPE(t), ((void *)((char *)block + BLOCK_ALIGN())), BLOCK_ALIGN(), \
+            size, block->extra_size);                                           \
+    return_ptr = ((void *)((char *)block + BLOCK_ALIGN()))                      
 
-#define DEALLOC(header, size, ptr)                                              \
+#define _FREE(ptr)                                                              \
+    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());                   \
+    g_chunks.history.idx +=                                                     \
+        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
+        "Freeing block of type: %s. Address: %p\n",                             \
+        TTYPE(cast->type), ptr);                                                \
+    header_t *head =                                                            \
+        cast->type == 0 ? g_chunks.small :                                      \
+            cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());         \
+    cast->used = 0;                                                             \
+    head->max_blocks--;                                                         \
+    size_t size = 0;                                                            \
+    if (cast->type != 2) {                                                      \
+        if (!cast->next && !cast->prev) {                                       \
+            bzero(cast, cast->size + cast->extra_size);                         \
+        } else if (!cast->next) {                                               \
+            cast->prev->extra_size +=                                           \
+                 cast->size + cast->extra_size + BLOCK_ALIGN();                 \
+            cast->prev->next = nullptr;                                         \
+            if (cast->prev->first) {                                            \
+                cast->prev->used = 0;                                           \
+            }                                                                   \
+            bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());         \
+        } else if (!cast->prev) {                                               \
+            cast->used = 1;                                                     \
+            cast->extra_size += cast->size;                                     \
+            cast->size = 0;                                                     \
+        } else {                                                                \
+            if (cast->prev && cast->next) {                                     \
+                cast->prev->extra_size +=                                       \
+                    cast->size + cast->extra_size + BLOCK_ALIGN();              \
+                cast->prev->next = cast->next;                                  \
+                cast->next->prev = cast->prev;                                  \
+                bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());     \
+            } else if (cast->prev) {                                            \
+                cast->prev->extra_size +=                                       \
+                    cast->size + cast->extra_size + BLOCK_ALIGN();              \
+                cast->prev->next = nullptr;                                     \
+                bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());     \
+            } else if (cast->next) {                                            \
+                cast->extra_size += cast->size;                                 \
+                cast->size = 0;                                                 \
+            }                                                                   \
+        }                                                                       \
+    }                                                                           \
+    if ((head->full && head->free_blocks == head->max_blocks)                   \
+        || (cast && cast->type == 2)) {                                         \
+        size = head->chunk_cap;                                                 \
+        switch (cast->type)                                                     \
+        {                                                                       \
+        case E_TINY: DEALLOC(head, size, g_chunks.small, cast->type); break;    \
+        case E_SMALL: DEALLOC(head, size, g_chunks.medium, cast->type); break;  \
+        default: DEALLOC(head, size, g_chunks.large, cast->type); break;        \
+        }                                                                       \
+    }
+
+#define DEALLOC(header, size, ptr, t)                                           \
+    g_chunks.history.idx +=                                                     \
+        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
+        "Unmapping chunk of type %s. Address: %p\n",                            \
+        TTYPE(t), header);                                                      \
     if (header->prev && header->next) {                                         \
         ((header_t *)(header->prev))->next = header->next;                      \
     } else if (header->next) {                                                  \
@@ -144,8 +219,8 @@ extern pthread_mutex_t	g_mutex;
     _HEX_DUMP(large); 
 
 #define PRINT_MEMORY(small, medium, large)                                      \
-    _PRINT_MEMORY(small, TINY);                                                    \
-    _PRINT_MEMORY(medium, SMALL);                                                   \
+    _PRINT_MEMORY(small, TINY);                                                 \
+    _PRINT_MEMORY(medium, SMALL);                                               \
     _PRINT_MEMORY(large, LARGE); 
 
 #define _SHOW_ALLOC_MEMORY(ptr, t) {                                            \
@@ -157,6 +232,7 @@ extern pthread_mutex_t	g_mutex;
         while (list) {                                                          \
             print("%s : %p\n",#t, list);                                        \
             block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
+            size_t total_size = 0;                                              \
             while (block) {                                                     \
                 if (block->used && !block->free) {                              \
                     print(                                                      \
@@ -165,9 +241,11 @@ extern pthread_mutex_t	g_mutex;
                         (char *)block + block->size + BLOCK_ALIGN(),            \
                         block->size                                             \
                         );                                                      \
+                        total_size += block->size;                              \
                 }                                                               \
                 block = block->next;                                            \
             }                                                                   \
+            print("Total : %d bytes\n\n", total_size);                          \
             list = list->next;                                                  \
         }                                                                       \
     }                                                                           \
@@ -187,7 +265,7 @@ extern pthread_mutex_t	g_mutex;
             }                                                                   \
         }                                                                       \
     }                                                                           \
-    write(1, "\n", 1);                                                          \
+    print("\n\n");
 
 #define _HEX_DUMP(ptr) {                                                        \
     if (ptr) {                                                                  \
@@ -264,20 +342,28 @@ typedef struct header_s {
     void                *prev;
 }   header_t;
 
-typedef struct s_chunks {
+typedef struct history_s {
+    int     idx;
+    char    buffer[8192 * 4];
+}   history_t;
+
+typedef struct chunks_s {
     void            *small;
     void            *medium;
     void            *large;
+    history_t       history;
 }   chunks;
 
 extern chunks g_chunks;
 
 void free(void *ptr);
 void *malloc(size_t size);
+void *calloc(size_t nmemb, size_t size);
 void *realloc(void *ptr, size_t size);
+ void *reallocarray(void *ptr, size_t nmemb, size_t size);
 void show_alloc_mem();
-void hex_dump();
 void show_alloc_mem_ex();
+void hex_dump();
 void print_memory();
 
 void print(const char *fmt, ...);

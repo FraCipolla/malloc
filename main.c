@@ -190,35 +190,139 @@ int main()
             for (size_t j = 0; j < size; j++) {
                 ((unsigned char*)buffer)[j] = (unsigned char)(j % 256);
             }
-            print_memory();
+            hex_dump();
             free(buffer);
         }
     }
 
     /* show_alloc_mem() function */
-    // {
-    //     print("\nshow_alloc_mem() function\n\n");
-    //     #define M (1024 * 1024)
+    {
+        print("\nshow_alloc_mem() function\n\n");
+        #define M (1024 * 1024)
 
-    //     void* a = malloc(1);
-    //     void* b = malloc(2);
-    //     void* c = malloc(4);
-    //     void* d = malloc(8);
-    //     void* e = malloc(16);
-    //     void* f = malloc(32);
-    //     void* g = malloc(64);
-    //     void* h = malloc(128);
-    //     void* i = malloc(256);
-    //     void* j = malloc(512);
-    //     void* k = malloc(1024);
-    //     void* l = malloc(1024 * 2);
-    //     void* m = malloc(1024 * 4); 
-    //     void* n = malloc(1024 * 32);
-    //     void* o = malloc(M);
-    //     void* p = malloc(16*M);
-    //     void* q = malloc(128*M);
+        void* a = malloc(1);
+        void* b = malloc(2);
+        void* c = malloc(4);
+        void* d = malloc(8);
+        void* e = malloc(16);
+        void* f = malloc(32);
+        void* g = malloc(64);
+        void* h = malloc(128);
+        void* i = malloc(256);
+        void* j = malloc(512);
+        void* k = malloc(1024);
+        void* l = malloc(1024 * 2);
+        void* m = malloc(1024 * 4); 
+        void* n = malloc(1024 * 32);
+        void* o = malloc(M);
+        void* p = malloc(16*M);
+        void* q = malloc(128*M);
         
-    //     show_alloc_mem(); 
+        show_alloc_mem();
+    }
 
-    // }
+    /* show_alloc_mem_ex() function */
+    {
+        show_alloc_mem_ex();
+    }
+
+    /* calloc test */
+    {
+        print("\nCalloc test\n\n");
+
+        size_t num_elements = 10;
+        int* ptr = (int*)calloc(num_elements, sizeof(int));        
+
+        assert(ptr != NULL);
+
+        for (size_t i = 0; i < num_elements; ++i) {
+            assert(ptr[i] == 0);
+        }
+
+        free(ptr);
+
+        ptr = (int*)calloc(0, sizeof(int));
+
+        assert(ptr != NULL);  
+        free(ptr);
+
+        ptr = (int*)calloc(num_elements, 0);
+
+        assert(ptr != NULL);  
+        free(ptr);
+
+        uint64_t* ptr_64 = (uint64_t *)calloc(num_elements * 100, sizeof(uint64_t));
+        free(ptr_64);
+    }
+
+    /* reallocarray test */
+    {
+        print("\nReallocarray test:\n");
+        print("\t- Test case 1: Regular resizing to a larger size\n");
+        size_t num_elements = 5;
+        size_t size_per_element = sizeof(int);
+        int* ptr = (int*)malloc(num_elements * size_per_element);
+
+        for (size_t i = 0; i < num_elements; ++i) {
+            ptr[i] = i;
+        }
+
+        size_t new_num_elements = 10;
+        ptr = (int*)reallocarray(ptr, new_num_elements, size_per_element);
+
+        assert(ptr != NULL);
+        print("\033[0;32m");
+        print("\t\ttest passed\n");
+        print("\033[0m");
+
+    
+        for (size_t i = 0; i < num_elements; ++i) {
+            assert(ptr[i] == (int)i);
+        }
+
+        for (size_t i = num_elements; i < new_num_elements; ++i) {
+            assert(ptr[i] == 0);
+        }
+
+        free(ptr);
+
+        print("\t- Test case 2: Resize to a smaller size\n");
+        ptr = (int*)malloc(num_elements * size_per_element);
+
+        for (size_t i = 0; i < num_elements; ++i) {
+            ptr[i] = i;
+        }
+
+        size_t smaller_num_elements = 3;
+        ptr = (int*)reallocarray(ptr, smaller_num_elements, size_per_element);
+
+        assert(ptr != NULL);
+        print("\033[0;32m");
+        print("\t\ttest passed\n");
+        print("\033[0m");
+
+        for (size_t i = 0; i < smaller_num_elements; ++i) {
+            assert(ptr[i] == (int)i);
+        }
+
+        free(ptr);
+
+        print("\t- Test case 3: Resize with 0 elements\n");
+        ptr = (int*)malloc(num_elements * size_per_element);
+        ptr = (int*)reallocarray(ptr, 0, size_per_element);
+
+        assert(ptr == NULL);
+        print("\033[0;32m");
+        print("\t\ttest passed\n");
+        print("\033[0m");
+
+        print("\t- Test case 4: Resize with 0 size per element\n");
+        ptr = (int*)malloc(num_elements * size_per_element);
+        ptr = (int*)reallocarray(ptr, num_elements, 0);
+
+        assert(ptr == NULL);
+        print("\033[0;32m");
+        print("\t\ttest passed\n");
+        print("\033[0m");
+    }
 }
