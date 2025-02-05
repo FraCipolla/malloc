@@ -65,11 +65,6 @@ extern pthread_mutex_t	g_mutex;
     header->full = t == E_LARGE ? true : false;                                 \
     header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
-    g_chunks.history.idx +=                                                     \
-        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
-        "New chunk of type %s mapped:\n\t- Address: %p\n\t- Chunk size: %ld\n\t-\
- Header size: %ld\n",     \
-        TTYPE(t), ptr, alloc_size, HEADER_ALIGN());                             \
     return ptr;                                                                 \
 }
 
@@ -127,20 +122,10 @@ extern pthread_mutex_t	g_mutex;
         ) {                                                                     \
         header->full = 1;                                                       \
     }                                                                           \
-    g_chunks.history.idx +=                                                     \
-        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
-            "Allocated block of type %s\n\t- Address: %p\n\t- Header Size: %ld\n\
-\t- Size: %ld\n\t- Extra size: %d\n",                                           \
-            TTYPE(t), ((void *)((char *)block + BLOCK_ALIGN())), BLOCK_ALIGN(), \
-            size, block->extra_size);                                           \
     return_ptr = ((void *)((char *)block + BLOCK_ALIGN()))                      
 
 #define _FREE(ptr)                                                              \
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());                   \
-    g_chunks.history.idx +=                                                     \
-        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
-        "Freeing block of type: %s. Address: %p\n",                             \
-        TTYPE(cast->type), ptr);                                                \
     header_t *head =                                                            \
         cast->type == 0 ? g_chunks.small :                                      \
             cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());         \
@@ -149,7 +134,6 @@ extern pthread_mutex_t	g_mutex;
     size_t size = 0;                                                            \
     if (cast->type != 2) {                                                      \
         if (!cast->next && !cast->prev) {                                       \
-            bzero(cast, cast->size + cast->extra_size);                         \
         } else if (!cast->next) {                                               \
             cast->prev->extra_size +=                                           \
                  cast->size + cast->extra_size + BLOCK_ALIGN();                 \
@@ -157,7 +141,6 @@ extern pthread_mutex_t	g_mutex;
             if (cast->prev->first) {                                            \
                 cast->prev->used = 0;                                           \
             }                                                                   \
-            bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());         \
         } else if (!cast->prev) {                                               \
             cast->used = 1;                                                     \
             cast->extra_size += cast->size;                                     \
@@ -168,17 +151,16 @@ extern pthread_mutex_t	g_mutex;
                     cast->size + cast->extra_size + BLOCK_ALIGN();              \
                 cast->prev->next = cast->next;                                  \
                 cast->next->prev = cast->prev;                                  \
-                bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());     \
             } else if (cast->prev) {                                            \
                 cast->prev->extra_size +=                                       \
                     cast->size + cast->extra_size + BLOCK_ALIGN();              \
                 cast->prev->next = nullptr;                                     \
-                bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());     \
             } else if (cast->next) {                                            \
                 cast->extra_size += cast->size;                                 \
                 cast->size = 0;                                                 \
             }                                                                   \
         }                                                                       \
+        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());             \
     }                                                                           \
     if ((head->full && head->free_blocks == head->max_blocks)                   \
         || (cast && cast->type == 2)) {                                         \
@@ -192,10 +174,6 @@ extern pthread_mutex_t	g_mutex;
     }
 
 #define DEALLOC(header, size, ptr, t)                                           \
-    g_chunks.history.idx +=                                                     \
-        sprintf(&g_chunks.history.buffer[g_chunks.history.idx],                 \
-        "Unmapping chunk of type %s. Address: %p\n",                            \
-        TTYPE(t), header);                                                      \
     if (header->prev && header->next) {                                         \
         ((header_t *)(header->prev))->next = header->next;                      \
     } else if (header->next) {                                                  \
@@ -287,7 +265,11 @@ extern pthread_mutex_t	g_mutex;
     }                                                                           \
 }
 
-// ■
+// Used memory \u2588 █
+// Empty memory \u2591 ░
+// Chunk header \u2592 ▒
+// Block header \u2593 ▓
+
 #define _PRINT_MEMORY(ptr, t) {                                                 \
     if (ptr) {                                                                  \
         header_t *list = ptr;                                                   \
@@ -295,18 +277,32 @@ extern pthread_mutex_t	g_mutex;
             list = list->prev;                                                  \
         }                                                                       \
         while (list) {                                                          \
-            print("%s : %p\n",#t, list);                                        \
-            size_t size = list->chunk_cap;        \
-            unsigned char *p = (unsigned char *)list; \
-            for (size_t i = 0; i < size; i++) {                                                     \
-                if (p[i]) { \
-                    print("■"); \
-                } else { \
-                    print("/"); \
-                }\
+            block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
+            if (block && block->size > 0) {                                     \
+                print("%s : %p\n",#t, list);                                    \
+                size_t i = 0;                                                   \
+                while (i < HEADER_ALIGN()) { print("\u2592"); ++i; }            \
+                while (block) {                                                 \
+                    for (size_t j = 0; j < BLOCK_ALIGN(); j++) {                \
+                        if (i > 0 && i % 128 == 0) { print("\n"); }             \
+                        print("\u2593");                                        \
+                        ++i;                                                    \
+                    }                                                           \
+                    for (size_t j = 0; j < (block->size); j++) {                \
+                        if (i > 0 && i % 128 == 0) { print("\n"); }             \
+                        print("\u2588");                                        \
+                        ++i;                                                    \
+                    }                                                           \
+                    for (size_t j = 0; j < (block->extra_size); j++) {          \
+                        if (i > 0 && i % 128 == 0) { print("\n"); }             \
+                        print("\u2591");                                        \
+                        ++i;                                                    \
+                    }                                                           \
+                    block = block->next;                                        \
+                }                                                               \
             }                                                                   \
-            print("\n"); \
             list = list->next;                                                  \
+            print("\n");                                                        \
         }                                                                       \
     }                                                                           \
 }
@@ -332,7 +328,7 @@ typedef struct block_s {
 
 /* Chunk header size = 64 */
 typedef struct header_s {
-    uint8_t                                 :4;
+    uint8_t                                 :6;
     uint8_t             full                :1;
     uint8_t             free                :1;
     uint8_t             free_blocks           ;
@@ -360,12 +356,14 @@ void free(void *ptr);
 void *malloc(size_t size);
 void *calloc(size_t nmemb, size_t size);
 void *realloc(void *ptr, size_t size);
- void *reallocarray(void *ptr, size_t nmemb, size_t size);
+void *reallocarray(void *ptr, size_t nmemb, size_t size);
 void show_alloc_mem();
 void show_alloc_mem_ex();
 void hex_dump();
 void print_memory();
 
 void print(const char *fmt, ...);
+void *ft_memcpy(void *dst, const void *src, size_t len);
+size_t ft_strlen(const char* s);
 
 #endif

@@ -195,37 +195,6 @@ int main()
         }
     }
 
-    /* show_alloc_mem() function */
-    {
-        print("\nshow_alloc_mem() function\n\n");
-        #define M (1024 * 1024)
-
-        void* a = malloc(1);
-        void* b = malloc(2);
-        void* c = malloc(4);
-        void* d = malloc(8);
-        void* e = malloc(16);
-        void* f = malloc(32);
-        void* g = malloc(64);
-        void* h = malloc(128);
-        void* i = malloc(256);
-        void* j = malloc(512);
-        void* k = malloc(1024);
-        void* l = malloc(1024 * 2);
-        void* m = malloc(1024 * 4); 
-        void* n = malloc(1024 * 32);
-        void* o = malloc(M);
-        void* p = malloc(16*M);
-        void* q = malloc(128*M);
-        
-        show_alloc_mem();
-    }
-
-    /* show_alloc_mem_ex() function */
-    {
-        show_alloc_mem_ex();
-    }
-
     /* calloc test */
     {
         print("\nCalloc test\n\n");
@@ -324,5 +293,41 @@ int main()
         print("\033[0;32m");
         print("\t\ttest passed\n");
         print("\033[0m");
+    }
+
+    /* show_alloc_mem() function */
+    {
+        print("\nshow_alloc_mem() function\n\n");
+        #define M (1024 * 1024)
+
+        void* a = malloc(1);
+        void* b = malloc(2);
+        void* c = malloc(4);
+        void* d = malloc(8);
+        void* e = malloc(16);
+        void* f = malloc(32);
+        void* g = malloc(64);
+        void* h = malloc(128);
+        void* i = malloc(256);
+        void* j = malloc(512);
+        void* k = malloc(1024);
+        void* l = malloc(1024 * 2);
+        void* m = malloc(1024 * 4); 
+        void* n = malloc(1024 * 32);
+        // void* o = malloc(M);
+        // void* p = malloc(16*M);
+        // void* q = malloc(128*M);
+        
+        show_alloc_mem();
+    }
+
+    /* show_alloc_mem_ex() function */
+    {
+        show_alloc_mem_ex();
+    }
+
+    /* print_memory() function */
+    {
+        print_memory();
     }
 }

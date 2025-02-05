@@ -9,7 +9,7 @@ HOSTLIB = libft_malloc_$(HOSTTYPE).so
 CC=gcc
 CFLAGS       	= -Wall -Wextra -g -Werror -I/
 LDFLAGS      	= -shared
-SRC				= malloc.c
+SRC				= malloc.c utility.c
 INCLUDES		= malloc.h
 MK_OBJ_FLAGS 	= -fPIC
 OBJ=$(SRC:%.c=%.o)
