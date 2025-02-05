@@ -123,13 +123,14 @@ void print(const char *fmt, ...)
     va_end(ap);
 }
 
-void add_to_history(char * dest, const char *fmt, ...)
+size_t add_to_history(char * dest, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
 
     char *str = "0123456789abcdef";
-    int idx = 0, i = 0;
+    int i = 0;
+    size_t idx = 0;
     char buff[128];
     
     while (*fmt) {
@@ -138,7 +139,7 @@ void add_to_history(char * dest, const char *fmt, ...)
             case 's':              /* string */
                 char *s = va_arg(ap, char *);
                 while(*s) {
-                    dest[idx++] = *s;
+                    dest[idx++] = *s++;
                 };
                 break;
             case 'd':              /* int */
@@ -157,7 +158,8 @@ void add_to_history(char * dest, const char *fmt, ...)
                 break;
             case 'p':              /* pointer */
                 long unsigned int p = va_arg(ap, long unsigned int);
-                write(1, "0x", 2);
+                dest[idx++] = '0';
+                dest[idx++] = 'x';
                 i = 0;
                 while (p > 0) {
                     buff[i] = str[p % 16];
@@ -185,4 +187,5 @@ void add_to_history(char * dest, const char *fmt, ...)
         fmt++;
     }
     va_end(ap);
+    return idx;
 }
