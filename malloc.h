@@ -65,9 +65,9 @@ extern pthread_mutex_t	g_mutex;
     header->full = t == E_LARGE ? true : false;                                 \
     header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
-    g_chunks.history.idx +=                                                     \
-        add_to_history(&g_chunks.history.buffer[g_chunks.history.idx],          \
-        "New chunk of type %s mapped:\n\t- Address: %p\n\t- Chunk size: %d\n\t- Header size: %d\n",                                                           \
+        add_to_history( \
+        "New chunk of type %s mapped:\n\t- Address: %p\n\t- Chunk size: %d\n\t- \
+Header size: %d\n",                                                             \
         TTYPE(t), ptr, alloc_size, HEADER_ALIGN());                             \
     return ptr;                                                                 \
 }
@@ -126,8 +126,7 @@ extern pthread_mutex_t	g_mutex;
         ) {                                                                     \
         header->full = 1;                                                       \
     }                                                                           \
-    g_chunks.history.idx +=                                                     \
-        add_to_history(&g_chunks.history.buffer[g_chunks.history.idx],          \
+        add_to_history( \
             "Allocated block of type %s\n\t- Address: %p\n\t- Header Size: %d\n\
 \t- Size: %d\n\t- Extra size: %d\n",                                           \
             TTYPE(t), ((void *)((char *)block + BLOCK_ALIGN())), BLOCK_ALIGN(), \
@@ -136,8 +135,7 @@ extern pthread_mutex_t	g_mutex;
 
 #define _FREE(ptr)                                                              \
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());                   \
-    g_chunks.history.idx +=                                                     \
-        add_to_history(&g_chunks.history.buffer[g_chunks.history.idx],          \
+        add_to_history( \
         "Freeing block of type: %s. Address: %p\n",                             \
         TTYPE(cast->type), ptr);                                                \
     header_t *head =                                                            \
@@ -188,8 +186,7 @@ extern pthread_mutex_t	g_mutex;
     }
 
 #define DEALLOC(header, size, ptr, t)                                           \
-    g_chunks.history.idx +=                                                     \
-        add_to_history(&g_chunks.history.buffer[g_chunks.history.idx],          \
+        add_to_history( \
         "Unmapping chunk of type %s. Address: %p\n",                            \
         TTYPE(t), header);                                                      \
     if (header->prev && header->next) {                                         \
@@ -382,7 +379,7 @@ void print_memory();
 
 /* utility */
 void print(const char *fmt, ...);
-size_t add_to_history(char * dest, const char *fmt, ...);
+void add_to_history(const char *fmt, ...);
 void *ft_memcpy(void *dst, const void *src, size_t len);
 size_t ft_strlen(const char* s);
 

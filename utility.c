@@ -1,5 +1,6 @@
 #include "malloc.h"
 #include <stdarg.h>
+#include <fcntl.h>
 
 /* memcpy, should be almost always aligned */
 void *ft_memcpy(void *dst, const void *src, size_t len)
@@ -123,8 +124,9 @@ void print(const char *fmt, ...)
     va_end(ap);
 }
 
-size_t add_to_history(char * dest, const char *fmt, ...)
+void add_to_history(const char *fmt, ...)
 {
+    int fd = open("malloc_history.txt", O_CREAT | O_APPEND | O_RDWR | O_TRUNC, 0644);
     va_list ap;
     va_start(ap, fmt);
 
@@ -139,34 +141,34 @@ size_t add_to_history(char * dest, const char *fmt, ...)
             case 's':              /* string */
                 char *s = va_arg(ap, char *);
                 while(*s) {
-                    dest[idx++] = *s++;
+                    write(fd, s, 1);
+                    s++;
                 };
                 break;
             case 'd':              /* int */
                 int d = va_arg(ap, int);
-                if (d < 0) { write(1, "-", 1); d *= -1; }
+                if (d < 0) { write(fd, "-", 1); d *= -1; }
                 i = 0;
                 while (d > 0) {
                     buff[i++] = (d % 10) + 48;
                     d /= 10;
                 }
-                while (i-- > 0) { dest[idx++] = buff[i]; }
+                while (i-- > 0) { write(fd, &buff[i], 1); }
                 break;
             case 'c':              /* char */
                 char c = (char)va_arg(ap, int);
-                dest[idx++] = c;
+                write(fd, &c, 1);
                 break;
             case 'p':              /* pointer */
                 long unsigned int p = va_arg(ap, long unsigned int);
-                dest[idx++] = '0';
-                dest[idx++] = 'x';
+                write(fd, "0x", 2);
                 i = 0;
                 while (p > 0) {
                     buff[i] = str[p % 16];
                     p /= 16;
                     i++;
                 }
-                while (i-- > 0) { dest[idx++] = buff[i]; }
+                while (i-- > 0) { write(fd, &buff[i], 1); }
                 break;
             case 'x':
                 long unsigned int x = va_arg(ap, long unsigned int);
@@ -179,13 +181,14 @@ size_t add_to_history(char * dest, const char *fmt, ...)
                         break;
                     }
                 }
-                while (i-- > 0) { dest[idx++] = buff[i]; }
+                while (i-- > 0) { write(fd, &buff[i], 1); }
             }
         } else {
-            dest[idx++] = *fmt;
+            write(fd, fmt, 1);
         }
         fmt++;
     }
     va_end(ap);
-    return idx;
+    write(fd, "\n", 1);
+    close(fd);
 }

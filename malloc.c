@@ -108,35 +108,29 @@ void *realloc(void *ptr, size_t size)
 {
     pthread_mutex_lock(&g_mutex);
     if (!ptr) {
-        g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "Attempt to realloc a null pointer: %p\n", ptr);
+        add_to_history("Attempt to realloc a null pointer: %p\n", ptr);
         pthread_mutex_unlock(&g_mutex);
         return nullptr;
     } else if (size == 0) {
-        g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "Reallocing pointer giving 0 size (equale free): %p\n", ptr);
+        add_to_history("Reallocing pointer giving 0 size (equale free): %p\n", ptr);
         _FREE(ptr)
         ptr = nullptr;
         pthread_mutex_unlock(&g_mutex);
         return ptr;
     }
 
-    g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "Reallocing pointer: %p for size: %d\n", ptr, size);
+    add_to_history("Reallocing pointer: %p for size: %d\n", ptr, size);
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
     if (size <= cast->size || cast->extra_size + cast->size >= size) {
-        g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "   Enought size in block %p, no need to realloc\n", ptr);
+        add_to_history("   Enought size in block %p, no need to realloc\n", ptr);
         cast->extra_size = cast->size + cast->extra_size - size; 
         cast->size = size;
     } else if (!cast->next && cast->type != 2) {
-        g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "   Pointer %p is the last allocated block of the chunk, no need to realloc\n", ptr);
+        add_to_history("   Pointer %p is the last allocated block of the chunk, no need to realloc\n", ptr);
         cast->size = size;
         cast->extra_size = ALIGN(size);
     } else {
-        g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "   Not enought size (%d) for pointer %p, allocate a new pointer and free the old one\n", size, ptr);
+        add_to_history("   Not enought size (%d) for pointer %p, allocate a new pointer and free the old one\n", size, ptr);
         void *return_ptr = nullptr;
         if (size <= (TINY - BLOCK_ALIGN())) {
             _MALLOC(size, E_TINY, g_chunks.small);
@@ -161,8 +155,7 @@ void free(void *ptr)
 {
     pthread_mutex_lock(&g_mutex);
     if (!ptr) {
-        g_chunks.history.idx += add_to_history(&g_chunks.history.buffer[g_chunks.history.idx], \
-            "Attempt to free a null pointer: %p\n", ptr);
+        add_to_history("Attempt to free a null pointer: %p\n", ptr);
         pthread_mutex_unlock(&g_mutex);
         return ;
     }
