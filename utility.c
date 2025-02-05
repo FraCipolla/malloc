@@ -22,8 +22,8 @@ void *ft_memcpy(void *dst, const void *src, size_t len)
     /* 64-bit version of the magic.  */
     /* Do the shift in two steps to avoid a warning if long has 32 bits.  */
     if (sizeof (longword) > 4) {
-      himagic = ((himagic << 16) << 16) | himagic;
-      lomagic = ((lomagic << 16) << 16) | lomagic;
+        himagic = ((himagic << 16) << 16) | himagic;
+        lomagic = ((lomagic << 16) << 16) | lomagic;
     }
     /* if aligned copy 1 word at a time */
     if ((uintptr_t)dst % sizeof(long) == 0 && (uintptr_t)src % sizeof(long) == 0 && len % sizeof(long) == 0) {
@@ -117,6 +117,70 @@ void print(const char *fmt, ...)
             }
         } else {
             write(1, fmt, 1);
+        }
+        fmt++;
+    }
+    va_end(ap);
+}
+
+void add_to_history(char * dest, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    char *str = "0123456789abcdef";
+    int idx = 0, i = 0;
+    char buff[128];
+    
+    while (*fmt) {
+        if (*fmt == '%') {
+            switch (*(++fmt)) {
+            case 's':              /* string */
+                char *s = va_arg(ap, char *);
+                while(*s) {
+                    dest[idx++] = *s;
+                };
+                break;
+            case 'd':              /* int */
+                int d = va_arg(ap, int);
+                if (d < 0) { write(1, "-", 1); d *= -1; }
+                i = 0;
+                while (d > 0) {
+                    buff[i++] = (d % 10) + 48;
+                    d /= 10;
+                }
+                while (i-- > 0) { dest[idx++] = buff[i]; }
+                break;
+            case 'c':              /* char */
+                char c = (char)va_arg(ap, int);
+                dest[idx++] = c;
+                break;
+            case 'p':              /* pointer */
+                long unsigned int p = va_arg(ap, long unsigned int);
+                write(1, "0x", 2);
+                i = 0;
+                while (p > 0) {
+                    buff[i] = str[p % 16];
+                    p /= 16;
+                    i++;
+                }
+                while (i-- > 0) { dest[idx++] = buff[i]; }
+                break;
+            case 'x':
+                long unsigned int x = va_arg(ap, long unsigned int);
+                i = 0;
+                while (x > 0) {
+                    buff[i] = str[x % 16];
+                    x /= 16;
+                    i++;
+                    if (i == 8) {
+                        break;
+                    }
+                }
+                while (i-- > 0) { dest[idx++] = buff[i]; }
+            }
+        } else {
+            dest[idx++] = *fmt;
         }
         fmt++;
     }

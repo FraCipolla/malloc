@@ -362,7 +362,9 @@ void show_alloc_mem_ex();
 void hex_dump();
 void print_memory();
 
+/* utility */
 void print(const char *fmt, ...);
+void add_to_history(char * dest, const char *fmt, ...);
 void *ft_memcpy(void *dst, const void *src, size_t len);
 size_t ft_strlen(const char* s);
 

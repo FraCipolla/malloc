@@ -5,11 +5,21 @@ int main()
 {
     /* basic malloc test */
     {
-        print("\nbasic malloc test\n\n");
+        print("\nbasic malloc test:\n\n");
+
+        print("\t- Test case 1: allocating pointer of size sizeof(int)\n");
         int* ptr = (int*) malloc(sizeof(int));
+        print("\t\tassert(ptr != NULL)\n");
         assert(ptr != NULL);
+        print("\033[0;32m");
+        print("\t\ttest passed\n");
+        print("\033[0m");
         *ptr = 42;
+        print("\t\tassert(ptr == 42)\n");
         assert(*ptr == 42);
+        print("\033[0;32m");
+        print("\t\ttest passed\n");
+        print("\033[0m");
         free(ptr);
     }
 
