@@ -331,13 +331,13 @@ int main()
         show_alloc_mem();
     }
 
-    /* show_alloc_mem_ex() function */
-    {
-        show_alloc_mem_ex();
-    }
-
     /* print_memory() function */
     {
         print_memory();
+    }
+    
+    /* show_alloc_mem_ex() function */
+    {
+        show_alloc_mem_ex();
     }
 }

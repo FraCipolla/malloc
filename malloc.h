@@ -65,7 +65,7 @@ extern pthread_mutex_t	g_mutex;
     header->full = t == E_LARGE ? true : false;                                 \
     header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
-        add_to_history( \
+        add_to_history(                                                         \
         "New chunk of type %s mapped:\n\t- Address: %p\n\t- Chunk size: %d\n\t- \
 Header size: %d\n",                                                             \
         TTYPE(t), ptr, alloc_size, HEADER_ALIGN());                             \

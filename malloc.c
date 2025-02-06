@@ -1,5 +1,6 @@
 #include "malloc.h"
 #include <errno.h>
+#include <fcntl.h>
 
 chunks              g_chunks = {0};
 pthread_mutex_t		g_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -174,7 +175,15 @@ void show_alloc_mem()
 void show_alloc_mem_ex()
 {
     pthread_mutex_lock(&g_mutex);
-    print("%s", g_chunks.history.buffer);
+    int fd = open("malloc_history.txt", O_RDONLY, 0644);
+    char buff[1024] = {0};
+    int bytes_read = 0;
+    if (fd != -1) {
+        while ((bytes_read = read(fd, buff, 1024))) {
+            write(1, buff, bytes_read);
+        }
+        close(fd);
+    }
     pthread_mutex_unlock(&g_mutex);
 }
 

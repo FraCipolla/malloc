@@ -1,0 +1,1632 @@
+New chunk of type TINY mapped:
+	- Address: 0x744583038000
+	- Chunk size: 57344
+	- Header size: 32
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x744583038070
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x7445830380a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Freeing block of type: TINY. Address: 0x744583038070
+
+Freeing block of type: TINY. Address: 0x7445830380a0
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 96
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer: 0x744583038040 for size: 16
+
+   Enought size in block 0x744583038040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Reallocing pointer: 0x744583038040 for size: 8
+
+   Enought size in block 0x744583038040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer giving 0 size (equale free): 0x744583038040
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Attempt to free a null pointer: 0x
+
+New chunk of type LARGE mapped:
+	- Address: 0x744542c00000
+	- Chunk size: 1073745920
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x744542c00040
+	- Header Size: 32
+	- Size: 1073741824
+	- Extra size: 4032
+
+Freeing block of type: LARGE. Address: 0x744542c00040
+
+Unmapping chunk of type LARGE. Address: 0x744542c00020
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x744583038090
+	- Header Size: 32
+	- Size: 80
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x744583038100
+	- Header Size: 32
+	- Size: 120
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x7445830381a0
+	- Header Size: 32
+	- Size: 160
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x744583038260
+	- Header Size: 32
+	- Size: 200
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x744583038350
+	- Header Size: 32
+	- Size: 240
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x7445830381a0
+
+Freeing block of type: TINY. Address: 0x744583038090
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Freeing block of type: TINY. Address: 0x744583038100
+
+Freeing block of type: TINY. Address: 0x744583038260
+
+Freeing block of type: TINY. Address: 0x744583038350
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 864
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+New chunk of type SMALL mapped:
+	- Address: 0x744582d9a000
+	- Chunk size: 417792
+	- Header size: 32
+
+Allocated block of type SMALL
+	- Address: 0x744582d9a040
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Freeing block of type: SMALL. Address: 0x744582d9a040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+New chunk of type LARGE mapped:
+	- Address: 0x744583036000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x744583036040
+	- Header Size: 32
+	- Size: 8000
+	- Extra size: 128
+
+Freeing block of type: LARGE. Address: 0x744583036040
+
+Unmapping chunk of type LARGE. Address: 0x744583036020
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x744583038040 for size: 40
+
+   Pointer 0x744583038040 is the last allocated block of the chunk, no need to realloc
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x744583038040 for size: 12
+
+   Enought size in block 0x744583038040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x744583038040
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x744583038040
+
+Freeing block of type: TINY. Address: 0x744583038040
+
+Allocated block of type TINY
+	- Address: 0x744583038040
+	- Header Size: 32
+	- Size: 1
+	- Extra size: 15
+
+Allocated block of type TINY
+	- Address: 0x744583038070
+	- Header Size: 32
+	- Size: 2
+	- Extra size: 14
+
+Allocated block of type TINY
+	- Address: 0x7445830380a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x7445830380d0
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x744583038100
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x744583038130
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x744583038170
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x7445830381d0
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x744583038270
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x744582d9a040
+	- Header Size: 32
+	- Size: 512
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x744582d9a260
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x744582d9a680
+	- Header Size: 32
+	- Size: 2048
+	- Extra size: 
+
+New chunk of type LARGE mapped:
+	- Address: 0x744583034000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x744583034040
+	- Header Size: 32
+	- Size: 4096
+	- Extra size: 4032
+
+New chunk of type LARGE mapped:
+	- Address: 0x744582d91000
+	- Chunk size: 36864
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x744582d91040
+	- Header Size: 32
+	- Size: 32768
+	- Extra size: 4032
+
+New chunk of type TINY mapped:
+	- Address: 0x74aa1411a000
+	- Chunk size: 57344
+	- Header size: 32
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a070
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a0a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Freeing block of type: TINY. Address: 0x74aa1411a070
+
+Freeing block of type: TINY. Address: 0x74aa1411a0a0
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 96
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer: 0x74aa1411a040 for size: 16
+
+   Enought size in block 0x74aa1411a040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Reallocing pointer: 0x74aa1411a040 for size: 8
+
+   Enought size in block 0x74aa1411a040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer giving 0 size (equale free): 0x74aa1411a040
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Attempt to free a null pointer: 0x
+
+New chunk of type LARGE mapped:
+	- Address: 0x74a9d3c00000
+	- Chunk size: 1073745920
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x74a9d3c00040
+	- Header Size: 32
+	- Size: 1073741824
+	- Extra size: 4032
+
+Freeing block of type: LARGE. Address: 0x74a9d3c00040
+
+Unmapping chunk of type LARGE. Address: 0x74a9d3c00020
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a090
+	- Header Size: 32
+	- Size: 80
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a100
+	- Header Size: 32
+	- Size: 120
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a1a0
+	- Header Size: 32
+	- Size: 160
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a260
+	- Header Size: 32
+	- Size: 200
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a350
+	- Header Size: 32
+	- Size: 240
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a1a0
+
+Freeing block of type: TINY. Address: 0x74aa1411a090
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Freeing block of type: TINY. Address: 0x74aa1411a100
+
+Freeing block of type: TINY. Address: 0x74aa1411a260
+
+Freeing block of type: TINY. Address: 0x74aa1411a350
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 864
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+New chunk of type SMALL mapped:
+	- Address: 0x74aa140ad000
+	- Chunk size: 417792
+	- Header size: 32
+
+Allocated block of type SMALL
+	- Address: 0x74aa140ad040
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Freeing block of type: SMALL. Address: 0x74aa140ad040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+New chunk of type LARGE mapped:
+	- Address: 0x74aa14118000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x74aa14118040
+	- Header Size: 32
+	- Size: 8000
+	- Extra size: 128
+
+Freeing block of type: LARGE. Address: 0x74aa14118040
+
+Unmapping chunk of type LARGE. Address: 0x74aa14118020
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x74aa1411a040 for size: 40
+
+   Pointer 0x74aa1411a040 is the last allocated block of the chunk, no need to realloc
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x74aa1411a040 for size: 12
+
+   Enought size in block 0x74aa1411a040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x74aa1411a040
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x74aa1411a040
+
+Freeing block of type: TINY. Address: 0x74aa1411a040
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a040
+	- Header Size: 32
+	- Size: 1
+	- Extra size: 15
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a070
+	- Header Size: 32
+	- Size: 2
+	- Extra size: 14
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a0a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a0d0
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a100
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a130
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a170
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a1d0
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x74aa1411a270
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x74aa140ad040
+	- Header Size: 32
+	- Size: 512
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x74aa140ad260
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x74aa140ad680
+	- Header Size: 32
+	- Size: 2048
+	- Extra size: 
+
+New chunk of type LARGE mapped:
+	- Address: 0x74aa14116000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x74aa14116040
+	- Header Size: 32
+	- Size: 4096
+	- Extra size: 4032
+
+New chunk of type LARGE mapped:
+	- Address: 0x74aa140a4000
+	- Chunk size: 36864
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x74aa140a4040
+	- Header Size: 32
+	- Size: 32768
+	- Extra size: 4032
+
+New chunk of type TINY mapped:
+	- Address: 0x763c3353e000
+	- Chunk size: 57344
+	- Header size: 32
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x763c3353e070
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x763c3353e0a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Freeing block of type: TINY. Address: 0x763c3353e070
+
+Freeing block of type: TINY. Address: 0x763c3353e0a0
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 96
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer: 0x763c3353e040 for size: 16
+
+   Enought size in block 0x763c3353e040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Reallocing pointer: 0x763c3353e040 for size: 8
+
+   Enought size in block 0x763c3353e040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer giving 0 size (equale free): 0x763c3353e040
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Attempt to free a null pointer: 0x
+
+New chunk of type LARGE mapped:
+	- Address: 0x763bf3000000
+	- Chunk size: 1073745920
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x763bf3000040
+	- Header Size: 32
+	- Size: 1073741824
+	- Extra size: 4032
+
+Freeing block of type: LARGE. Address: 0x763bf3000040
+
+Unmapping chunk of type LARGE. Address: 0x763bf3000020
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x763c3353e090
+	- Header Size: 32
+	- Size: 80
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x763c3353e100
+	- Header Size: 32
+	- Size: 120
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x763c3353e1a0
+	- Header Size: 32
+	- Size: 160
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x763c3353e260
+	- Header Size: 32
+	- Size: 200
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x763c3353e350
+	- Header Size: 32
+	- Size: 240
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e1a0
+
+Freeing block of type: TINY. Address: 0x763c3353e090
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Freeing block of type: TINY. Address: 0x763c3353e100
+
+Freeing block of type: TINY. Address: 0x763c3353e260
+
+Freeing block of type: TINY. Address: 0x763c3353e350
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 864
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+New chunk of type SMALL mapped:
+	- Address: 0x763c334d1000
+	- Chunk size: 417792
+	- Header size: 32
+
+Allocated block of type SMALL
+	- Address: 0x763c334d1040
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Freeing block of type: SMALL. Address: 0x763c334d1040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+New chunk of type LARGE mapped:
+	- Address: 0x763c3353c000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x763c3353c040
+	- Header Size: 32
+	- Size: 8000
+	- Extra size: 128
+
+Freeing block of type: LARGE. Address: 0x763c3353c040
+
+Unmapping chunk of type LARGE. Address: 0x763c3353c020
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x763c3353e040 for size: 40
+
+   Pointer 0x763c3353e040 is the last allocated block of the chunk, no need to realloc
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x763c3353e040 for size: 12
+
+   Enought size in block 0x763c3353e040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x763c3353e040
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x763c3353e040
+
+Freeing block of type: TINY. Address: 0x763c3353e040
+
+Allocated block of type TINY
+	- Address: 0x763c3353e040
+	- Header Size: 32
+	- Size: 1
+	- Extra size: 15
+
+Allocated block of type TINY
+	- Address: 0x763c3353e070
+	- Header Size: 32
+	- Size: 2
+	- Extra size: 14
+
+Allocated block of type TINY
+	- Address: 0x763c3353e0a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x763c3353e0d0
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x763c3353e100
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x763c3353e130
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x763c3353e170
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x763c3353e1d0
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x763c3353e270
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x763c334d1040
+	- Header Size: 32
+	- Size: 512
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x763c334d1260
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x763c334d1680
+	- Header Size: 32
+	- Size: 2048
+	- Extra size: 
+
+New chunk of type LARGE mapped:
+	- Address: 0x763c3353a000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x763c3353a040
+	- Header Size: 32
+	- Size: 4096
+	- Extra size: 4032
+
+New chunk of type LARGE mapped:
+	- Address: 0x763c334c8000
+	- Chunk size: 36864
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x763c334c8040
+	- Header Size: 32
+	- Size: 32768
+	- Extra size: 4032
+
+New chunk of type TINY mapped:
+	- Address: 0x735d96cc6000
+	- Chunk size: 57344
+	- Header size: 32
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6070
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x735d96cc60a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Freeing block of type: TINY. Address: 0x735d96cc6070
+
+Freeing block of type: TINY. Address: 0x735d96cc60a0
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 96
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer: 0x735d96cc6040 for size: 16
+
+   Enought size in block 0x735d96cc6040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Reallocing pointer: 0x735d96cc6040 for size: 8
+
+   Enought size in block 0x735d96cc6040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Reallocing pointer giving 0 size (equale free): 0x735d96cc6040
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Attempt to free a null pointer: 0x
+
+New chunk of type LARGE mapped:
+	- Address: 0x735d56800000
+	- Chunk size: 1073745920
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x735d56800040
+	- Header Size: 32
+	- Size: 1073741824
+	- Extra size: 4032
+
+Freeing block of type: LARGE. Address: 0x735d56800040
+
+Unmapping chunk of type LARGE. Address: 0x735d56800020
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6090
+	- Header Size: 32
+	- Size: 80
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6100
+	- Header Size: 32
+	- Size: 120
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x735d96cc61a0
+	- Header Size: 32
+	- Size: 160
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6260
+	- Header Size: 32
+	- Size: 200
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6350
+	- Header Size: 32
+	- Size: 240
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc61a0
+
+Freeing block of type: TINY. Address: 0x735d96cc6090
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Freeing block of type: TINY. Address: 0x735d96cc6100
+
+Freeing block of type: TINY. Address: 0x735d96cc6260
+
+Freeing block of type: TINY. Address: 0x735d96cc6350
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 864
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+New chunk of type SMALL mapped:
+	- Address: 0x735d96c59000
+	- Chunk size: 417792
+	- Header size: 32
+
+Allocated block of type SMALL
+	- Address: 0x735d96c59040
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Freeing block of type: SMALL. Address: 0x735d96c59040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 40
+	- Extra size: 8
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 
+	- Extra size: 
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+New chunk of type LARGE mapped:
+	- Address: 0x735d96cc4000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x735d96cc4040
+	- Header Size: 32
+	- Size: 8000
+	- Extra size: 128
+
+Freeing block of type: LARGE. Address: 0x735d96cc4040
+
+Unmapping chunk of type LARGE. Address: 0x735d96cc4020
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x735d96cc6040 for size: 40
+
+   Pointer 0x735d96cc6040 is the last allocated block of the chunk, no need to realloc
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer: 0x735d96cc6040 for size: 12
+
+   Enought size in block 0x735d96cc6040, no need to realloc
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x735d96cc6040
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 20
+	- Extra size: 12
+
+Reallocing pointer giving 0 size (equale free): 0x735d96cc6040
+
+Freeing block of type: TINY. Address: 0x735d96cc6040
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6040
+	- Header Size: 32
+	- Size: 1
+	- Extra size: 15
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6070
+	- Header Size: 32
+	- Size: 2
+	- Extra size: 14
+
+Allocated block of type TINY
+	- Address: 0x735d96cc60a0
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Allocated block of type TINY
+	- Address: 0x735d96cc60d0
+	- Header Size: 32
+	- Size: 8
+	- Extra size: 8
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6100
+	- Header Size: 32
+	- Size: 16
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6130
+	- Header Size: 32
+	- Size: 32
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6170
+	- Header Size: 32
+	- Size: 64
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x735d96cc61d0
+	- Header Size: 32
+	- Size: 128
+	- Extra size: 
+
+Allocated block of type TINY
+	- Address: 0x735d96cc6270
+	- Header Size: 32
+	- Size: 256
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x735d96c59040
+	- Header Size: 32
+	- Size: 512
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x735d96c59260
+	- Header Size: 32
+	- Size: 1024
+	- Extra size: 
+
+Allocated block of type SMALL
+	- Address: 0x735d96c59680
+	- Header Size: 32
+	- Size: 2048
+	- Extra size: 
+
+New chunk of type LARGE mapped:
+	- Address: 0x735d96cc2000
+	- Chunk size: 8192
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x735d96cc2040
+	- Header Size: 32
+	- Size: 4096
+	- Extra size: 4032
+
+New chunk of type LARGE mapped:
+	- Address: 0x735d96c50000
+	- Chunk size: 36864
+	- Header size: 32
+
+Allocated block of type LARGE
+	- Address: 0x735d96c50040
+	- Header Size: 32
+	- Size: 32768
+	- Extra size: 4032
+
