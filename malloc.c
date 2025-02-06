@@ -17,7 +17,13 @@ static inline void* init(size_t size, E_TYPES type)
     return nullptr;
 }
 
-/* allocate (2 * sizeof(size_t)) aligned memory block */
+/*
+ * The malloc() function allocates size bytes and returns a pointer
+ * to the allocated memory.  The memory is not initialized.  If size
+ * is 0, then malloc() returns a unique pointer value that can later
+ * be successfully passed to free().  (See "Nonportable behavior" for
+ * portability issues.)
+*/
 void *malloc(size_t size)
 {
     pthread_mutex_lock(&g_mutex);
@@ -33,6 +39,20 @@ void *malloc(size_t size)
     return return_ptr;
 }
 
+/* he calloc() function allocates memory for an array of n elements
+ * of size bytes each and returns a pointer to the allocated memory.
+ * The memory is set to zero.  If n or size is 0, then calloc()
+ * returns a unique pointer value that can later be successfully
+ * passed to free().
+ *
+ * If the multiplication of n and size would result in integer
+ * overflow, then calloc() returns an error.  By contrast, an integer
+ * overflow would not be detected in the following call to malloc(),
+ * with the result that an incorrectly sized block of memory would be
+ * allocated:
+ *
+ *  malloc(n * size);
+ */
 void *calloc(size_t nmemb, size_t size)
 {
     pthread_mutex_lock(&g_mutex);
@@ -100,10 +120,23 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size)
     return realloc(ptr, nmemb * size);
 }
 
-/* 
- * realloc passed pointer. If no block after the passed one exists
- * or if the block extra size is enought, set the new size and return the pointer.
- * Else, call malloc for a new pointer, copy the old pointer to the new one, and free the old pointer
+/*
+ * The realloc() function changes the size of the memory block
+ * pointed to by ptr to size bytes.  The contents of the memory will
+ * be unchanged in the range from the start of the region up to the
+ * minimum of the old and new sizes.  If the new size is larger than
+ * the old size, the added memory will not be initialized.
+
+ * If ptr is NULL, then the call is equivalent to malloc(size), for
+ * all values of size.
+
+ * If size is equal to zero, and ptr is not NULL, then the call is
+ * equivalent to free(ptr) (but see "Nonportable behavior" for
+ * portability issues).
+
+ * Unless ptr is NULL, it must have been returned by an earlier call
+ * to malloc or related functions.  If the area pointed to was moved,
+ * a free(ptr) is done.
 */
 void *realloc(void *ptr, size_t size)
 {
@@ -149,9 +182,12 @@ void *realloc(void *ptr, size_t size)
 }
 
 /*
- * free the passed pointer. If it's the last pointer, delete it and move 1 block back.
- * If the block has adjacent free blocks, merge them to avoid fragmentation.
- */
+ * The free() function frees the memory space pointed to by ptr,
+ * which must have been returned by a previous call to malloc() or
+ * related functions.  Otherwise, or if ptr has already been freed,
+ * undefined behavior occurs.  If ptr is NULL, no operation is
+ * performed.
+*/
 void free(void *ptr)
 {
     pthread_mutex_lock(&g_mutex);
@@ -165,6 +201,7 @@ void free(void *ptr)
     pthread_mutex_unlock(&g_mutex);
 }
 
+/* Print allocated memory in term of size and address range */
 void show_alloc_mem()
 {
     pthread_mutex_lock(&g_mutex);
@@ -172,6 +209,7 @@ void show_alloc_mem()
     pthread_mutex_unlock(&g_mutex);
 }
 
+/* Print an history of allocations and deallocations */
 void show_alloc_mem_ex()
 {
     pthread_mutex_lock(&g_mutex);
@@ -187,12 +225,21 @@ void show_alloc_mem_ex()
     pthread_mutex_unlock(&g_mutex);
 }
 
+/*
+ * Print an hexdump of each allocated block.
+ * Display the starting address and the following 32 bytes in hexadecimal format,
+ * grouped 2 at a time.
+*/
 void hex_dump() {
     pthread_mutex_lock(&g_mutex);
     HEX_DUMP(g_chunks.small, g_chunks.medium, g_chunks.large);
     pthread_mutex_unlock(&g_mutex);
 }
 
+/*
+ * Print the allocated memory showing the chunk header,
+ * the block header, the used memory and the free memory 
+*/
 void print_memory() {
     pthread_mutex_lock(&g_mutex);
     PRINT_MEMORY(g_chunks.small, g_chunks.medium, g_chunks.large);

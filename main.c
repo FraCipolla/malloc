@@ -309,10 +309,11 @@ int main()
     {
         print("\nshow_alloc_mem() function\n\n");
         #define M (1024 * 1024)
-
         void* a = malloc(1);
         void* b = malloc(2);
+        print("1\n");
         void* c = malloc(4);
+        print("2\n");
         void* d = malloc(8);
         void* e = malloc(16);
         void* f = malloc(32);
@@ -327,7 +328,7 @@ int main()
         // void* o = malloc(M);
         // void* p = malloc(16*M);
         // void* q = malloc(128*M);
-        
+
         show_alloc_mem();
     }
 
@@ -335,7 +336,7 @@ int main()
     {
         print_memory();
     }
-    
+
     /* show_alloc_mem_ex() function */
     {
         show_alloc_mem_ex();

@@ -61,9 +61,7 @@ extern pthread_mutex_t	g_mutex;
     ptr = map;                                                                  \
     header_t *header = ptr;                                                     \
     header->max_blocks = 0;                                                     \
-    header->free_blocks = 0;                                                    \
     header->full = t == E_LARGE ? true : false;                                 \
-    header->free = 0;                                                           \
     header->chunk_cap = alloc_size;                                             \
         add_to_history(                                                         \
         "New chunk of type %s mapped:\n\t- Address: %p\n\t- Chunk size: %d\n\t- \
@@ -126,16 +124,16 @@ Header size: %d\n",                                                             
         ) {                                                                     \
         header->full = 1;                                                       \
     }                                                                           \
-        add_to_history( \
-            "Allocated block of type %s\n\t- Address: %p\n\t- Header Size: %d\n\
-\t- Size: %d\n\t- Extra size: %d\n",                                           \
+    add_to_history(                                                             \
+        "Allocated block of type %s\n\t- Address: %p\n\t- Header Size: %d\n\t- S\
+ize: %d\n\t- Extra size: %d\n",                                                 \
             TTYPE(t), ((void *)((char *)block + BLOCK_ALIGN())), BLOCK_ALIGN(), \
             size, block->extra_size);                                           \
     return_ptr = ((void *)((char *)block + BLOCK_ALIGN()))                      
 
 #define _FREE(ptr)                                                              \
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());                   \
-        add_to_history( \
+        add_to_history(                                                         \
         "Freeing block of type: %s. Address: %p\n",                             \
         TTYPE(cast->type), ptr);                                                \
     header_t *head =                                                            \
@@ -146,9 +144,10 @@ Header size: %d\n",                                                             
     size_t size = 0;                                                            \
     if (cast->type != 2) {                                                      \
         if (!cast->next && !cast->prev) {                                       \
+            /* skip this case, we are in the first block */                     \
         } else if (!cast->next) {                                               \
             cast->prev->extra_size +=                                           \
-                 cast->size + cast->extra_size + BLOCK_ALIGN();                 \
+                cast->size + cast->extra_size + BLOCK_ALIGN();                  \
             cast->prev->next = nullptr;                                         \
             if (cast->prev->first) {                                            \
                 cast->prev->used = 0;                                           \
@@ -174,7 +173,7 @@ Header size: %d\n",                                                             
         }                                                                       \
         bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());             \
     }                                                                           \
-    if ((head->full && head->free_blocks == head->max_blocks)                   \
+    if ((head->full && head->max_blocks == 0)                                   \
         || (cast && cast->type == 2)) {                                         \
         size = head->chunk_cap;                                                 \
         switch (cast->type)                                                     \
@@ -186,7 +185,7 @@ Header size: %d\n",                                                             
     }
 
 #define DEALLOC(header, size, ptr, t)                                           \
-        add_to_history( \
+        add_to_history(                                                         \
         "Unmapping chunk of type %s. Address: %p\n",                            \
         TTYPE(t), header);                                                      \
     if (header->prev && header->next) {                                         \
@@ -343,26 +342,17 @@ typedef struct block_s {
 
 /* Chunk header size = 64 */
 typedef struct header_s {
-    uint8_t                                 :6;
-    uint8_t             full                :1;
-    uint8_t             free                :1;
-    uint8_t             free_blocks           ;
-    uint8_t             max_blocks            ;
+    uint8_t             full;
+    uint8_t             max_blocks;
     size_t              chunk_cap;
     void                *next;
     void                *prev;
 }   header_t;
 
-typedef struct history_s {
-    size_t     idx;
-    char    buffer[8192 * 4];
-}   history_t;
-
 typedef struct chunks_s {
     void            *small;
     void            *medium;
     void            *large;
-    history_t       history;
 }   chunks;
 
 extern chunks g_chunks;

@@ -132,8 +132,7 @@ void add_to_history(const char *fmt, ...)
 
     char *str = "0123456789abcdef";
     int i = 0;
-    size_t idx = 0;
-    char buff[128];
+    char buff[512];
     
     while (*fmt) {
         if (*fmt == '%') {
