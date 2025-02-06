@@ -84,25 +84,33 @@ Header size: %d\n",                                                             
     block->first = 1;                                                           \
     block_t *prev = block->used ? block : nullptr;                              \
     while (block->next && block->next->used                                     \
-            && block->extra_size < (size + BLOCK_ALIGN())) {                    \
+            && block->extra_size < (ALIGN(size) + BLOCK_ALIGN())) {             \
         block = block->next;                                                    \
         prev = block;                                                           \
     }                                                                           \
     if (block->next && block->used                                              \
-        && block->extra_size >= (ALIGN(size) + BLOCK_ALIGN())) {                \
+        && (block->extra_size - (ALIGN(block->size) - block->size))             \
+            >= (ALIGN(size) + BLOCK_ALIGN())) {                                 \
         block_t *next = block->next;                                            \
-        prev = block;                                                           \
-        block->extra_size = 0;                                                  \
-        block =                                                                 \
-            (block_t *)((char *)block + (block->size + BLOCK_ALIGN()));         \
-        block->next = next;                                                     \
-        block->extra_size =                                                     \
-            block->prev->extra_size - (block->prev->size + BLOCK_ALIGN());      \
+        if (!block->first) prev = block;                                        \
+        if (block->size > 0) {                                                  \
+            block =                                                             \
+            (block_t *)((char *)block + (ALIGN(block->size) + BLOCK_ALIGN()));  \
+            block->prev = prev;                                                 \
+            block->prev->next = block;                                          \
+            block->next = next;                                                 \
+            block->extra_size =                                                 \
+                block->prev->extra_size - (size + BLOCK_ALIGN());               \
+            block->prev->extra_size = 0;                                        \
+        } else {                                                                \
+            block->extra_size -= size;                                          \
+        }                                                                       \
     } else if (block->used) {                                                   \
         block =                                                                 \
             (block_t *)                                                         \
             ((char *)block + block->size + block->extra_size + BLOCK_ALIGN());  \
         prev->next = block;                                                     \
+        block->extra_size = 0;                                                  \
     }                                                                           \
     if (prev) {                                                                 \
         prev->last = 0;                                                         \
@@ -131,7 +139,7 @@ ize: %d\n\t- Extra size: %d\n",                                                 
     return_ptr = ((void *)((char *)block + BLOCK_ALIGN()))                      
 
 #define _FREE(ptr)                                                              \
-block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN()); \
+    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN()); \
         add_to_history(                                                         \
         "Freeing block of type: %s. Address: %p\n",                             \
         TTYPE(cast->type), ptr);                                                \

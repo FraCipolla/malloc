@@ -190,8 +190,7 @@ void *realloc(void *ptr, size_t size)
 void free(void *ptr)
 {
     pthread_mutex_lock(&g_mutex);
-    if (ptr) {
-        print("!ptr\n");
+    if (!ptr) {
         add_to_history("Attempt to free a null pointer: %p\n", ptr);
         pthread_mutex_unlock(&g_mutex);
         return ;

@@ -1,41 +1,11 @@
-New chunk of type LARGE mapped:
-	- Address: 0x766985c00000
-	- Chunk size: 16781312
+New chunk of type SMALL mapped:
+	- Address: 0x732df9b76000
+	- Chunk size: 417792
 	- Header size: 32
 
-Allocated block of type LARGE
-	- Address: 0x766985c00020
+Allocated block of type SMALL
+	- Address: 0x732df9b76020
 	- Header Size: 32
-	- Size: 16777216
-	- Extra size: 4032
-
-New chunk of type LARGE mapped:
-	- Address: 0x766984a00000
-	- Chunk size: 16781312
-	- Header size: 32
-
-Allocated block of type LARGE
-	- Address: 0x766984a00020
-	- Header Size: 32
-	- Size: 16777216
-	- Extra size: 4032
-
-Reallocing pointer: 0x766985c00040 for size: 134217728
-
-   Not enought size (134217728) for pointer 0x766985c00040, allocate a new pointer and free the old one
-
-New chunk of type LARGE mapped:
-	- Address: 0x76697c800000
-	- Chunk size: 134221824
-	- Header size: 32
-
-Allocated block of type LARGE
-	- Address: 0x76697c800020
-	- Header Size: 32
-	- Size: 134217728
-	- Extra size: 4032
-
-Freeing block of type: LARGE. Address: 0x766985c00040
-
-Unmapping chunk of type LARGE. Address: 0x766985c00020
+	- Size: 715
+	- Extra size: 5
 
