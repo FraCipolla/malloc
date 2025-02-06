@@ -1,0 +1,31 @@
+New chunk of type TINY mapped:
+	- Address: 0x7feb3287a000
+	- Chunk size: 57344
+	- Header size: 32
+
+Allocated block of type TINY
+	- Address: 0x7feb3287a020
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Attempt to free a null pointer: 0x7feb3287a040
+
+Allocated block of type TINY
+	- Address: 0x7feb3287a050
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Attempt to free a null pointer: 0x7feb3287a070
+
+Allocated block of type TINY
+	- Address: 0x7feb3287a080
+	- Header Size: 32
+	- Size: 4
+	- Extra size: 12
+
+Attempt to free a null pointer: 0x7feb3287a0a0
+
+Attempt to free a null pointer: 0x7feb3287a0a0
+

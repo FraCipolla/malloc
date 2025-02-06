@@ -142,9 +142,8 @@ void *realloc(void *ptr, size_t size)
 {
     pthread_mutex_lock(&g_mutex);
     if (!ptr) {
-        add_to_history("Attempt to realloc a null pointer: %p\n", ptr);
         pthread_mutex_unlock(&g_mutex);
-        return nullptr;
+        return malloc(size);
     } else if (size == 0) {
         add_to_history("Reallocing pointer giving 0 size (equale free): %p\n", ptr);
         _FREE(ptr)
@@ -191,13 +190,16 @@ void *realloc(void *ptr, size_t size)
 void free(void *ptr)
 {
     pthread_mutex_lock(&g_mutex);
-    if (!ptr) {
+    if (ptr) {
+        print("!ptr\n");
         add_to_history("Attempt to free a null pointer: %p\n", ptr);
         pthread_mutex_unlock(&g_mutex);
         return ;
     }
-
-    _FREE(ptr)
+    
+    if (((block_t *)((char *)ptr - BLOCK_ALIGN()))->used) {
+        _FREE(ptr)
+    }
     pthread_mutex_unlock(&g_mutex);
 }
 

@@ -126,7 +126,14 @@ void print(const char *fmt, ...)
 
 void add_to_history(const char *fmt, ...)
 {
-    int fd = open("malloc_history.txt", O_CREAT | O_APPEND | O_WRONLY, 0644);
+    static int clean = 0;
+    int fd;
+    if (!clean) {
+        fd = open("malloc_history.txt", O_CREAT | O_TRUNC | O_WRONLY, 0644);
+        clean = 1;
+    } else {
+        fd = open("malloc_history.txt", O_APPEND | O_WRONLY, 0644);
+    }
     va_list ap;
     va_start(ap, fmt);
 

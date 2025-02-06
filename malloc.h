@@ -127,12 +127,11 @@ Header size: %d\n",                                                             
     add_to_history(                                                             \
         "Allocated block of type %s\n\t- Address: %p\n\t- Header Size: %d\n\t- S\
 ize: %d\n\t- Extra size: %d\n",                                                 \
-            TTYPE(t), ((void *)((char *)block + BLOCK_ALIGN())), BLOCK_ALIGN(), \
-            size, block->extra_size);                                           \
+            TTYPE(t), block, BLOCK_ALIGN(), size, block->extra_size);           \
     return_ptr = ((void *)((char *)block + BLOCK_ALIGN()))                      
 
 #define _FREE(ptr)                                                              \
-    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());                   \
+block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN()); \
         add_to_history(                                                         \
         "Freeing block of type: %s. Address: %p\n",                             \
         TTYPE(cast->type), ptr);                                                \
@@ -145,6 +144,8 @@ ize: %d\n\t- Extra size: %d\n",                                                 
     if (cast->type != 2) {                                                      \
         if (!cast->next && !cast->prev) {                                       \
             /* skip this case, we are in the first block */                     \
+            cast->size = 0; \
+            cast->extra_size = 0; \
         } else if (!cast->next) {                                               \
             cast->prev->extra_size +=                                           \
                 cast->size + cast->extra_size + BLOCK_ALIGN();                  \
@@ -171,7 +172,7 @@ ize: %d\n\t- Extra size: %d\n",                                                 
                 cast->size = 0;                                                 \
             }                                                                   \
         }                                                                       \
-        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());             \
+        bzero(ptr, cast->size + cast->extra_size);             \
     }                                                                           \
     if ((head->full && head->max_blocks == 0)                                   \
         || (cast && cast->type == 2)) {                                         \
