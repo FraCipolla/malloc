@@ -127,22 +127,13 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size)
 }
 
 /*
- * The realloc() function changes the size of the memory block
- * pointed to by ptr to size bytes.  The contents of the memory will
- * be unchanged in the range from the start of the region up to the
- * minimum of the old and new sizes.  If the new size is larger than
- * the old size, the added memory will not be initialized.
-
- * If ptr is NULL, then the call is equivalent to malloc(size), for
- * all values of size.
-
- * If size is equal to zero, and ptr is not NULL, then the call is
- * equivalent to free(ptr) (but see "Nonportable behavior" for
- * portability issues).
-
- * Unless ptr is NULL, it must have been returned by an earlier call
- * to malloc or related functions.  If the area pointed to was moved,
- * a free(ptr) is done.
+ * The realloc() function changes the size of the memory block pointed to by ptr to size bytes.
+ * The contents will be unchanged in the range from the start of the region up to the minimum of
+ * the old and new sizes. If the new size is larger than the old size, the added memory will not be initialized.
+ * If ptr is NULL, then the call is equivalent to malloc(size), for all values of size;
+ * if size is equal to zero, and ptr is not NULL, then the call is equivalent to free(ptr).
+ * Unless ptr is NULL, it must have been returned by an earlier call to malloc(), calloc() or realloc().
+ * If the area pointed to was moved, a free(ptr) is done.
 */
 void *realloc(void *ptr, size_t size)
 {
@@ -150,15 +141,17 @@ void *realloc(void *ptr, size_t size)
     if (!ptr) {
         pthread_mutex_unlock(&g_mutex);
         return malloc(size);
+    } else if (size == 0) {
+        add_to_history("Reallocating pointer giving 0 size (equale free): %p\n", ptr);
+        _FREE(ptr)
+        ptr = nullptr;
+        pthread_mutex_unlock(&g_mutex);
+        return ptr;
     }
 
     add_to_history("Reallocing pointer: %p for size: %d\n", ptr, size);
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
-    if (size == 0) {
-        add_to_history("Reallocating pointer giving 0 size: %p\n", ptr);
-        cast->extra_size += cast->size;
-        cast->size = 0;
-    } else if (size <= cast->size || cast->extra_size + cast->size >= size) {
+    if (size <= cast->size || cast->extra_size + cast->size >= size) {
         add_to_history("   Enought size in block %p, no need to realloc\n", ptr);
         cast->extra_size = cast->size + cast->extra_size - size; 
         cast->size = size;

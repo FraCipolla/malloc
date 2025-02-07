@@ -148,7 +148,7 @@ int main()
         ptr[1] = 20;
 
         ptr = (int*) realloc(ptr, 0);
-        assert(ptr != NULL);
+        assert(ptr == NULL);
 
         free(ptr);
         print("\033[0;32m");
@@ -299,7 +299,7 @@ int main()
         ptr = (int*)malloc(num_elements * size_per_element);
         ptr = (int*)reallocarray(ptr, 0, size_per_element);
 
-        assert(ptr != NULL);
+        assert(ptr == NULL);
         print("\033[0;32m");
         print("\t\ttest passed\n");
         print("\033[0m");
@@ -308,7 +308,7 @@ int main()
         ptr = (int*)malloc(num_elements * size_per_element);
         ptr = (int*)reallocarray(ptr, num_elements, 0);
 
-        assert(ptr != NULL);
+        assert(ptr == NULL);
         print("\033[0;32m");
         print("\t\ttest passed\n");
         print("\033[0m");
