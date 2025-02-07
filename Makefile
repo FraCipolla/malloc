@@ -6,7 +6,7 @@ NAME = libft_malloc.so
 
 HOSTLIB = libft_malloc_$(HOSTTYPE).so
 
-CC=gcc
+CC				= gcc
 CFLAGS       	= -Wall -Wextra -g -Werror -I/
 LDFLAGS      	= -shared
 SRC				= malloc.c utility.c
@@ -26,7 +26,7 @@ ${HOSTLIB}: ${OBJ} ${INCLUDES}
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ) -o $(HOSTLIB)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(MK_OBJ_FLAGS) -MMD -MT $@ -c $< -o $@
+	$(CC) $(CFLAGS) $(MK_OBJ_FLAGS) -c $< -o $@
 
 clean:
 	rm -fr $(OBJ)

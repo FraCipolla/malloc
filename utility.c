@@ -81,6 +81,7 @@ void print(const char *fmt, ...)
             case 'd':              /* int */
                 int d = va_arg(ap, int);
                 if (d < 0) { write(1, "-", 1); d *= -1; }
+                if (d == 0) { write(1, "0", 1); }
                 i = 0;
                 while (d > 0) {
                     buff[i++] = (d % 10) + 48;

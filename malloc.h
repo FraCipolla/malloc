@@ -338,15 +338,16 @@ typedef enum {
 
 /* Block header size = 24 bytes */
 typedef struct block_s {
-    uint64_t            type                :2 ;   /* Type of block */
-    uint64_t            used                :1 ;   /* Whether the block is used */
-    uint64_t            free                :1 ;   /* Whether the block is being freed after used */
-    uint64_t            first               :1 ;   /* Whether the block is the first one */
-    uint64_t            last                :1 ;   /* Whether the block is the last one */
-    uint64_t            size                :32;   /* Block size */
-    uint64_t            extra_size          :26;   /* Total block capacity. Needed for defragmentation */
-    struct block_s*     next                   ;   /* Mark the prev block*/
-    struct block_s*     prev                   ;   /* Mark the prev block*/
+    uint8_t                                 :2;
+    uint8_t             type                :2;   /* Type of block */
+    uint8_t             used                :1;   /* Whether the block is used */
+    uint8_t             free                :1;   /* Whether the block is being freed after used */
+    uint8_t             first               :1;   /* Whether the block is the first one */
+    uint8_t             last                :1;   /* Whether the block is the last one */
+    uint32_t            size                  ;   /* Block size */
+    uint32_t            extra_size            ;   /* Total block capacity. Needed for defragmentation */
+    struct block_s*     next                  ;   /* Mark the prev block*/
+    struct block_s*     prev                  ;   /* Mark the prev block*/
 } block_t;
 
 /* Chunk header size = 64 */

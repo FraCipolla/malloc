@@ -26,6 +26,12 @@ static inline void* init(size_t size, E_TYPES type)
 */
 void *malloc(size_t size)
 {
+    // print("size_t %d\n", sizeof(size_t));
+    // print("ptr %d\n", sizeof(void *));
+    // print("block %d\n", sizeof(block_t));
+    // print("header %d\n", sizeof(header_t));
+    // print("block align %d\n", BLOCK_ALIGN());
+    // print("header align %d\n", HEADER_ALIGN());
     pthread_mutex_lock(&g_mutex);
     void *return_ptr = nullptr;
     if (size <= (TINY - BLOCK_ALIGN())) {
