@@ -11,10 +11,10 @@ void *ft_memcpy(void *dst, const void *src, size_t len)
 
     /* Bits 31, 24, 16, and 8 of this number are zero.  Call these bits
      the "holes."  Note that there is a hole just to the left of
-     each byte, with an extra at the end:
+     each byte, with an extra at the end: ;
 
-     bits:  01111110 11111110 11111110 11111111
-     bytes: AAAAAAAA BBBBBBBB CCCCCCCC DDDDDDDD
+     bits: ;  01111110 11111110 11111110 11111111
+     bytes: ; AAAAAAAA BBBBBBBB CCCCCCCC DDDDDDDD
 
      The 1-bits make sure that carries propagate to the next 0-bit.
      The 0-bits provide holes for carries to fall into.  */
@@ -72,13 +72,13 @@ void print(const char *fmt, ...)
     while (*fmt) {
         if (*fmt == '%') {
             switch (*(++fmt)) {
-            case 's':              /* string */
+            case 's': ;              /* string */
                 char *s = va_arg(ap, char *);
                 while(*s) {
                     write(1, s++, 1);
                 };
                 break;
-            case 'd':              /* int */
+            case 'd': ;              /* int */
                 int d = va_arg(ap, int);
                 if (d < 0) { write(1, "-", 1); d *= -1; }
                 if (d == 0) { write(1, "0", 1); }
@@ -89,11 +89,11 @@ void print(const char *fmt, ...)
                 }
                 while (i-- > 0) { write(1, &buff[i], 1); }
                 break;
-            case 'c':              /* char */
+            case 'c': ;              /* char */
                 char c = (char)va_arg(ap, int);
                 write(1, &c, 1);
                 break;
-            case 'p':              /* pointer */
+            case 'p': ;              /* pointer */
                 long unsigned int p = va_arg(ap, long unsigned int);
                 write(1, "0x", 2);
                 i = 0;
@@ -104,7 +104,7 @@ void print(const char *fmt, ...)
                 }
                 while (i-- > 0) { write(1, &buff[i], 1); }
                 break;
-            case 'x':
+            case 'x': ;
                 long unsigned int x = va_arg(ap, long unsigned int);
                 i = 0;
                 while (x > 0) {
@@ -145,16 +145,17 @@ void add_to_history(const char *fmt, ...)
     while (*fmt) {
         if (*fmt == '%') {
             switch (*(++fmt)) {
-            case 's':              /* string */
+            case 's': ;              /* string */
                 char *s = va_arg(ap, char *);
                 while(*s) {
                     write(fd, s, 1);
                     s++;
                 };
                 break;
-            case 'd':              /* int */
+            case 'd': ;              /* int */
                 int d = va_arg(ap, int);
                 if (d < 0) { write(fd, "-", 1); d *= -1; }
+                if (d == 0) { write(fd, "0", 1); }
                 i = 0;
                 while (d > 0) {
                     buff[i++] = (d % 10) + 48;
@@ -162,11 +163,11 @@ void add_to_history(const char *fmt, ...)
                 }
                 while (i-- > 0) { write(fd, &buff[i], 1); }
                 break;
-            case 'c':              /* char */
+            case 'c': ;              /* char */
                 char c = (char)va_arg(ap, int);
                 write(fd, &c, 1);
                 break;
-            case 'p':              /* pointer */
+            case 'p': ;              /* pointer */
                 long unsigned int p = va_arg(ap, long unsigned int);
                 write(fd, "0x", 2);
                 i = 0;
@@ -177,7 +178,7 @@ void add_to_history(const char *fmt, ...)
                 }
                 while (i-- > 0) { write(fd, &buff[i], 1); }
                 break;
-            case 'x':
+            case 'x': ;
                 long unsigned int x = va_arg(ap, long unsigned int);
                 i = 0;
                 while (x > 0) {

@@ -75,25 +75,25 @@ void *calloc(size_t nmemb, size_t size)
     
     switch (el_size)
     {
-    case 2:
+    case 2: ;
         uint16_t *p16 = return_ptr;
         for (size_t i = 0; i < nmemb; i++) {
             p16[i] = 0;
         }
         break;
-    case 4:
+    case 4: ;
         uint32_t *p32 = (uint32_t *)return_ptr;
         for (size_t i = 0; i < nmemb; i++) {
             p32[i] = 0;
         }
         break;
-    case 8:
+    case 8: ;
         uint64_t *p64 = return_ptr;
         for (size_t i = 0; i < nmemb; i++) {
             p64[i] = 0;
         }
         break;
-    default:
+    default: ;
         uint8_t *p = return_ptr;
         for (size_t i = 0; i < nmemb; i++) {
             p[i] = 0;
