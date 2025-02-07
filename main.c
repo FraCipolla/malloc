@@ -360,7 +360,7 @@ int main()
             for (size_t j = 0; j < size; j++) {
                 ((unsigned char*)buffer)[j] = (unsigned char)(j % 256);
             }
-            // hex_dump();
+            hex_dump();
             free(buffer);
         }
     }
@@ -372,10 +372,10 @@ int main()
     }
 
     /* show_alloc_mem_ex() function */
-    // {
-    //     print("\nshow_alloc_mem_ex() function\n\n");
-    //     show_alloc_mem_ex();
-    // }
+    {
+        print("\nshow_alloc_mem_ex() function\n\n");
+        show_alloc_mem_ex();
+    }
 
     /* display defragmentation */
     {

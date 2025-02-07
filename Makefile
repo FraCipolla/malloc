@@ -16,10 +16,12 @@ OBJ=$(SRC:%.c=%.o)
 
 all: $(NAME)
 
+test:
+	$(CC) $(CFLAGS) $(SRC) main.c -o malloc && ./malloc
+
 $(NAME) : $(HOSTLIB)
 	@echo creating symbolic link
 	ln -fs ${HOSTLIB} ${NAME}
-	mv libft_malloc*.so tests/
 
 ${HOSTLIB}: ${OBJ} ${INCLUDES}
 	@echo compiling libft_malloc.so
