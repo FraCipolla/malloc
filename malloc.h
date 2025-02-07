@@ -139,10 +139,10 @@ ize: %d\n\t- Extra size: %d\n",                                                 
     return_ptr = ((void *)((char *)block + BLOCK_ALIGN()))                      
 
 #define _FREE(ptr)                                                              \
-    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN()); \
+    block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());                   \
         add_to_history(                                                         \
         "Freeing block of type: %s. Address: %p\n",                             \
-        TTYPE(cast->type), ptr);                                                \
+        TTYPE(cast->type), cast);                                               \
     header_t *head =                                                            \
         cast->type == 0 ? g_chunks.small :                                      \
             cast->type == 1 ? g_chunks.medium : (ptr - HEADER_ALIGN());         \
