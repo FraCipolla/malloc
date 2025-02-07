@@ -150,17 +150,15 @@ void *realloc(void *ptr, size_t size)
     if (!ptr) {
         pthread_mutex_unlock(&g_mutex);
         return malloc(size);
-    } else if (size == 0) {
-        add_to_history("Reallocing pointer giving 0 size (equale free): %p\n", ptr);
-        _FREE(ptr)
-        ptr = nullptr;
-        pthread_mutex_unlock(&g_mutex);
-        return ptr;
     }
 
     add_to_history("Reallocing pointer: %p for size: %d\n", ptr, size);
     block_t *cast = (block_t *)((char *)ptr - BLOCK_ALIGN());
-    if (size <= cast->size || cast->extra_size + cast->size >= size) {
+    if (size == 0) {
+        add_to_history("Reallocating pointer giving 0 size: %p\n", ptr);
+        cast->extra_size += cast->size;
+        cast->size = 0;
+    } else if (size <= cast->size || cast->extra_size + cast->size >= size) {
         add_to_history("   Enought size in block %p, no need to realloc\n", ptr);
         cast->extra_size = cast->size + cast->extra_size - size; 
         cast->size = size;
