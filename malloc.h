@@ -152,15 +152,10 @@ ize: %d\n\t- Extra size: %d\n",                                                 
     if (cast->type != 2) {                                                      \
         if (!cast->next && !cast->prev) {                                       \
             /* skip this case, we are in the first block */                     \
-            cast->size = 0; \
-            cast->extra_size = 0; \
         } else if (!cast->next) {                                               \
             cast->prev->extra_size +=                                           \
                 cast->size + cast->extra_size + BLOCK_ALIGN();                  \
             cast->prev->next = nullptr;                                         \
-            if (cast->prev->first) {                                            \
-                cast->prev->used = 0;                                           \
-            }                                                                   \
         } else if (!cast->prev) {                                               \
             cast->used = 1;                                                     \
             cast->extra_size += cast->size;                                     \
@@ -180,7 +175,7 @@ ize: %d\n\t- Extra size: %d\n",                                                 
                 cast->size = 0;                                                 \
             }                                                                   \
         }                                                                       \
-        bzero(ptr, cast->size + cast->extra_size);             \
+        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());             \
     }                                                                           \
     if ((head->full && head->max_blocks == 0)                                   \
         || (cast && cast->type == 2)) {                                         \
@@ -299,12 +294,16 @@ ize: %d\n\t- Extra size: %d\n",                                                 
         while (list->prev) {                                                    \
             list = list->prev;                                                  \
         }                                                                       \
+        print("Print memory:\n");                                               \
+        print("Chunk header: ▒\tBlock header: ▓\t");                            \
+        print("Used memory: █\tEmpty memory: ░\n\n");                           \
+        if (!list) { print("No memory allocated!\n"); }                         \
         while (list) {                                                          \
+            print("%s : %p\n",#t, list);                                        \
+            size_t i = 0;                                                       \
             block_t *block = (block_t *)((char *)list + HEADER_ALIGN());        \
+            while (i < HEADER_ALIGN()) { print("\u2592"); ++i; }                \
             if (block && block->size > 0) {                                     \
-                print("%s : %p\n",#t, list);                                    \
-                size_t i = 0;                                                   \
-                while (i < HEADER_ALIGN()) { print("\u2592"); ++i; }            \
                 while (block) {                                                 \
                     for (size_t j = 0; j < BLOCK_ALIGN(); j++) {                \
                         if (i > 0 && i % 128 == 0) { print("\n"); }             \
@@ -327,6 +326,7 @@ ize: %d\n\t- Extra size: %d\n",                                                 
             list = list->next;                                                  \
             print("\n");                                                        \
         }                                                                       \
+        print("\n");                                                            \
     }                                                                           \
 }
 

@@ -383,14 +383,38 @@ int main()
         int *ptr2 = calloc(42, sizeof(int));
         int *ptr3 = calloc(42, sizeof(int));
         int *ptr4 = calloc(42, sizeof(int));
+        int *ptr5 = calloc(42, sizeof(int));
     
-        // for (int i = 0; i < 42; i++) {
-        //     ptr[i] = 42;
-        //     ptr2[i] = 42;
-        //     ptr3[i] = 42;
-        //     ptr4[i] = 42;
-        // }
+        for (int i = 0; i < 42; i++) {
+            ptr[i] = 42;
+            ptr2[i] = 42;
+            ptr3[i] = 42;
+            ptr4[i] = 42;
+            ptr5[i] = 42;
+        }
 
-        // print_memory();
+        print("Allocate 5 blocks blocks\n");
+        print_memory();
+
+        free(ptr2);
+        free(ptr4);
+
+        print("Block 1 and 3 are being freed\n");
+        print_memory();
+
+        free(ptr3);
+
+        print("Block 2 is being freed, all blocks are merged\n");
+        print_memory();
+
+        free(ptr5);
+
+        print("Last block is being freed, only block 1 remain\n");
+        print_memory();
+        
+        free(ptr);
+
+        print("All blocks are freed, only the chunk header remains.\n");
+        print_memory();
     }
 }
