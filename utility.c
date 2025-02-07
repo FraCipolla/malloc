@@ -199,3 +199,10 @@ void add_to_history(const char *fmt, ...)
     write(fd, "\n", 1);
     close(fd);
 }
+
+void clear(void *dst, size_t len)
+{
+    while(len) {
+        ((char *)dst)[--len] = 0;
+    }
+}

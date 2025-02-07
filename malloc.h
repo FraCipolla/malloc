@@ -175,7 +175,7 @@ ize: %d\n\t- Extra size: %d\n",                                                 
                 cast->size = 0;                                                 \
             }                                                                   \
         }                                                                       \
-        bzero(cast, cast->size + cast->extra_size + BLOCK_ALIGN());             \
+        clear(cast, cast->size + cast->extra_size + BLOCK_ALIGN());             \
     }                                                                           \
     if ((head->full && head->max_blocks == 0)                                   \
         || (cast && cast->type == 2)) {                                         \
@@ -382,5 +382,6 @@ void print(const char *fmt, ...);
 void add_to_history(const char *fmt, ...);
 void *ft_memcpy(void *dst, const void *src, size_t len);
 size_t ft_strlen(const char* s);
+void clear(void *dst, size_t len);
 
 #endif
